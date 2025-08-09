@@ -1,5 +1,5 @@
 import os
-from pydantic_settings import BaseSettings
+from pydantic import BaseSettings
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,6 +20,12 @@ class Settings(BaseSettings):
         "http://localhost:3000",  # Alternative frontend port
         "http://127.0.0.1:3000"
     ]
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Add the frontend_url from environment to allowed_origins if not already present
+        if self.frontend_url not in self.allowed_origins:
+            self.allowed_origins.append(self.frontend_url)
 
     class Config:
         env_file = ".env"
