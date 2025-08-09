@@ -6,6 +6,7 @@ from ..schemas.user import Token, UserLogin, UserResponse, TokenWithUser
 from ..services.user_service import authenticate_user, get_user_by_email
 from ..utils.security import create_access_token
 from ..config import settings
+from ..utils.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -61,7 +62,6 @@ async def login_custom(user_login: UserLogin):
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user = Depends(get_current_user)):
-    from ..utils.dependencies import get_current_user
     return UserResponse(
         id=str(current_user.id),
         name=current_user.name,
