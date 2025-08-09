@@ -66,7 +66,7 @@ class Application(BaseModel):
     submissionDate: str
     reviewComments: str
     biodata: Optional[ResearcherBiodata] = None
-    biodata: Optional[Dict[str, Any]] = None  # Match frontend ResearcherBiodata interface
+    biodata: Optional[dict[str, Any]] = None  # Match frontend ResearcherBiodata interface
     deadline: Optional[str] = None
     status: str = "submitted"  # submitted, under_review, approved, rejected, withdrawn, editable, awaiting_signoff, signoff_complete, contract_pending, contract_received, needs_revision
     submission_date: str = Field(alias="submissionDate")  # Match frontend field name
