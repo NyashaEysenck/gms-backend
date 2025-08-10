@@ -1,0 +1,188 @@
+
+{
+  "projects": [
+    {
+      "id": "proj_001",
+      "applicationId": "app_003",
+      "title": "Gene Therapy for Rare Genetic Disorders",
+      "status": "completed",
+      "startDate": "2025-08-01T00:00:00Z",
+      "endDate": "2025-12-31T23:59:59Z",
+      "milestones": [
+        {
+          "id": "milestone_001",
+          "title": "Phase 1: Literature Review and Protocol Development",
+          "dueDate": "2025-10-01T00:00:00Z",
+          "status": "completed",
+          "description": "Complete comprehensive literature review and develop research protocol",
+          "progressReportUploaded": true,
+          "progressReportDate": "2025-09-28T00:00:00Z",
+          "progressReportFilename": "phase1_progress_report.pdf"
+        },
+        {
+          "id": "milestone_002",
+          "title": "Phase 2: Ethics Approval and Patient Recruitment",
+          "dueDate": "2025-10-30T00:00:00Z",
+          "status": "completed",
+          "description": "Obtain ethics committee approval and recruit study participants",
+          "progressReportUploaded": true,
+          "progressReportDate": "2025-10-25T00:00:00Z",
+          "progressReportFilename": "phase2_progress_report.pdf"
+        },
+        {
+          "id": "milestone_003",
+          "title": "Phase 3: Initial Laboratory Testing",
+          "dueDate": "2025-11-30T00:00:00Z",
+          "status": "completed",
+          "description": "Begin laboratory testing and data collection",
+          "progressReportUploaded": true,
+          "progressReportDate": "2025-11-28T00:00:00Z",
+          "progressReportFilename": "phase3_progress_report.pdf"
+        },
+        {
+          "id": "milestone_004",
+          "title": "Phase 4: Data Analysis and Reporting",
+          "dueDate": "2025-12-31T00:00:00Z",
+          "status": "completed",
+          "description": "Analyze collected data and prepare final report",
+          "progressReportUploaded": true,
+          "progressReportDate": "2025-12-30T00:00:00Z",
+          "progressReportFilename": "phase4_final_report.pdf"
+        }
+      ],
+      "requisitions": [
+        {
+          "id": "req_001",
+          "milestoneId": "milestone_001",
+          "amount": 15000,
+          "requestedDate": "2025-09-15T00:00:00Z",
+          "status": "approved",
+          "notes": "Equipment purchase for laboratory setup",
+          "reviewedBy": "manager@grants.edu",
+          "reviewedDate": "2025-09-18T00:00:00Z",
+          "reviewNotes": "Approved - equipment necessary for project completion"
+        },
+        {
+          "id": "req_002",
+          "milestoneId": "milestone_002",
+          "amount": 8500,
+          "requestedDate": "2025-10-01T00:00:00Z",
+          "status": "approved",
+          "notes": "Patient recruitment and ethics committee fees",
+          "reviewedBy": "manager@grants.edu",
+          "reviewedDate": "2025-10-03T00:00:00Z",
+          "reviewNotes": "Approved - within budget allocation"
+        },
+        {
+          "id": "req_003",
+          "milestoneId": "milestone_003",
+          "amount": 12000,
+          "requestedDate": "2025-11-15T00:00:00Z",
+          "status": "approved",
+          "notes": "Additional testing materials and lab consumables",
+          "reviewedBy": "manager@grants.edu",
+          "reviewedDate": "2025-11-18T00:00:00Z",
+          "reviewNotes": "Approved - final phase funding"
+        }
+      ],
+      "partners": [
+        {
+          "id": "partner_001",
+          "name": "City General Hospital",
+          "role": "Clinical Partner",
+          "mouFilename": "cgh_mou_2025.pdf",
+          "uploadedDate": "2025-07-20T00:00:00Z"
+        },
+        {
+          "id": "partner_002",
+          "name": "BioTech Research Institute",
+          "role": "Technical Collaborator",
+          "mouFilename": "btri_collaboration_agreement.pdf",
+          "uploadedDate": "2025-07-25T00:00:00Z"
+        }
+      ],
+      "finalReport": {
+        "narrativeReport": {
+          "filename": "final_narrative_report_gene_therapy.pdf",
+          "uploadedDate": "2026-01-10T00:00:00Z"
+        },
+        "financialReport": {
+          "filename": "final_financial_report_gene_therapy.pdf",
+          "uploadedDate": "2026-01-10T00:00:00Z"
+        },
+        "status": "submitted",
+        "submittedDate": "2026-01-10T00:00:00Z"
+      },
+      "closureWorkflow": {
+        "status": "pending"
+      }
+    },
+    {
+      "id": "proj_002",
+      "applicationId": "app_002",
+      "title": "Quantum Computing Applications in Cryptography",
+      "status": "on_hold",
+      "startDate": "2025-08-15T00:00:00Z",
+      "endDate": "2025-11-30T23:59:59Z",
+      "milestones": [
+        {
+          "id": "milestone_005",
+          "title": "Phase 1: Quantum Algorithm Design",
+          "dueDate": "2025-09-15T00:00:00Z",
+          "status": "completed",
+          "description": "Design and optimize quantum algorithms for cryptographic applications",
+          "progressReportUploaded": true,
+          "progressReportDate": "2025-09-10T00:00:00Z",
+          "progressReportFilename": "quantum_algo_phase1.pdf"
+        },
+        {
+          "id": "milestone_006",
+          "title": "Phase 2: Hardware Implementation",
+          "dueDate": "2025-10-15T00:00:00Z",
+          "status": "on_hold",
+          "description": "Implement algorithms on quantum hardware - currently on hold due to equipment issues",
+          "progressReportUploaded": false,
+          "isOverdue": true
+        },
+        {
+          "id": "milestone_007",
+          "title": "Phase 3: Security Analysis",
+          "dueDate": "2025-11-15T00:00:00Z",
+          "status": "pending",
+          "description": "Conduct comprehensive security analysis of implemented solutions",
+          "progressReportUploaded": false
+        },
+        {
+          "id": "milestone_008",
+          "title": "Phase 4: Performance Evaluation",
+          "dueDate": "2025-11-30T00:00:00Z",
+          "status": "pending",
+          "description": "Evaluate performance compared to classical cryptographic methods",
+          "progressReportUploaded": false
+        }
+      ],
+      "requisitions": [
+        {
+          "id": "req_004",
+          "milestoneId": "milestone_005",
+          "amount": 25000,
+          "requestedDate": "2025-08-20T00:00:00Z",
+          "status": "approved",
+          "notes": "Quantum computing hardware access and software licenses",
+          "reviewedBy": "manager@grants.edu",
+          "reviewedDate": "2025-08-22T00:00:00Z",
+          "reviewNotes": "Approved - critical for project success"
+        }
+      ],
+      "partners": [
+        {
+          "id": "partner_003",
+          "name": "Quantum Systems Ltd",
+          "role": "Hardware Provider",
+          "mouFilename": "quantum_systems_partnership.pdf",
+          "uploadedDate": "2025-07-10T00:00:00Z"
+        }
+      ]
+    }
+  ]
+}

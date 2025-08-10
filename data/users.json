@@ -1,0 +1,23 @@
+
+{
+  "users": [
+    {
+      "email": "researcher@grants.edu",
+      "password": "research123",
+      "role": "Researcher",
+      "name": "Dr. Sarah Johnson"
+    },
+    {
+      "email": "manager@grants.edu",
+      "password": "manager123",
+      "role": "Grants Manager",
+      "name": "Michael Chen"
+    },
+    {
+      "email": "admin@grants.edu",
+      "password": "admin123",
+      "role": "Admin",
+      "name": "Lisa Rodriguez"
+    }
+  ]
+}

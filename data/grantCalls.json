@@ -1,0 +1,65 @@
+
+{
+  "grantCalls": [
+    {
+      "id": "grant_001",
+      "title": "National Science Foundation Research Grant",
+      "type": "Research",
+      "sponsor": "National Science Foundation",
+      "deadline": "2025-08-15",
+      "scope": "Basic research in computer science, engineering, and mathematics",
+      "eligibility": "Academic institutions, non-profit research organizations",
+      "requirements": "PhD required, minimum 3 years research experience, detailed budget proposal",
+      "status": "Open",
+      "visibility": "Public"
+    },
+    {
+      "id": "grant_002",
+      "title": "Healthcare Innovation Challenge",
+      "type": "Innovation",
+      "sponsor": "Department of Health and Human Services",
+      "deadline": "2025-07-28",
+      "scope": "Innovative solutions for healthcare delivery and patient outcomes",
+      "eligibility": "Healthcare organizations, research institutions, private companies",
+      "requirements": "Proof of concept, partnership with healthcare provider, regulatory compliance plan",
+      "status": "Open",
+      "visibility": "Public"
+    },
+    {
+      "id": "grant_003",
+      "title": "Environmental Sustainability Program",
+      "type": "Environmental",
+      "sponsor": "Environmental Protection Agency",
+      "deadline": "2025-07-20",
+      "scope": "Projects focused on climate change mitigation and environmental protection",
+      "eligibility": "Non-profit organizations, educational institutions, state and local governments",
+      "requirements": "Environmental impact assessment, community engagement plan, measurable outcomes",
+      "status": "Open",
+      "visibility": "Public"
+    },
+    {
+      "id": "gc-004",
+      "title": "Small Business Innovation Research Grant",
+      "type": "Innovation",
+      "sponsor": "Small Business Administration",
+      "deadline": "2025-09-10",
+      "scope": "Technology development and commercialization for small businesses",
+      "eligibility": "Small businesses with fewer than 500 employees",
+      "requirements": "Business plan, technical feasibility study, commercialization strategy",
+      "status": "Open",
+      "visibility": "Public"
+    },
+    {
+      "id": "gc-005",
+      "title": "Advanced Manufacturing Research Initiative",
+      "type": "Research",
+      "sponsor": "Department of Energy",
+      "deadline": "2025-10-01",
+      "scope": "Research and development in advanced manufacturing technologies",
+      "eligibility": "Universities, national laboratories, industry partnerships",
+      "requirements": "Multi-institutional collaboration, technology transfer plan, industry matching funds",
+      "status": "Open",
+      "visibility": "Restricted"
+    }
+  ]
+}
