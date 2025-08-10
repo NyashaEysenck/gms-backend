@@ -30,7 +30,7 @@ async def load_frontend_data():
     db = client[settings.database_name]
     
     # Frontend data directory
-    frontend_data_dir = "../src/data"
+    frontend_data_dir = "data"
     
     try:
         # 1. Load Users (with password hashing)
