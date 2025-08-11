@@ -30,15 +30,15 @@ class ApplicationCreate(BaseModel):
     applicant_name: str = Field(alias="applicantName")  # Match frontend field name
     email: EmailStr
     proposal_title: str = Field(alias="proposalTitle")  # Match frontend field name
-    institution: str
-    department: str
-    project_summary: str = Field(alias="projectSummary")
-    objectives: str
-    methodology: str
-    expected_outcomes: str = Field(alias="expectedOutcomes")
-    budget_amount: float = Field(alias="budgetAmount")
-    budget_justification: str = Field(alias="budgetJustification")
-    timeline: str
+    institution: str = "Not specified"
+    department: str = "Not specified"
+    project_summary: str = Field(default="Project summary to be provided", alias="projectSummary")
+    objectives: str = "Research objectives"
+    methodology: str = "Research methodology"
+    expected_outcomes: str = Field(default="Expected research outcomes", alias="expectedOutcomes")
+    budget_amount: float = Field(default=0.0, alias="budgetAmount")
+    budget_justification: str = Field(default="Budget justification to be provided", alias="budgetJustification")
+    timeline: str = "12 months"
     biodata: Optional[Dict[str, Any]] = None  # Match frontend ResearcherBiodata interface
     deadline: Optional[str] = None
     proposal_file_name: Optional[str] = Field(None, alias="proposalFileName")

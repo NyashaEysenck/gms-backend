@@ -55,12 +55,12 @@ class Application(BaseModel):
     proposal_title: str = Field(alias="proposalTitle")
     institution: str = "Not specified"
     department: str = "Not specified"
-    project_summary: str = Field(alias="projectSummary")
+    project_summary: str = Field(default="Project summary to be provided", alias="projectSummary")
     objectives: str = "Research objectives"
     methodology: str = "Research methodology"
-    expected_outcomes: str = Field(alias="expectedOutcomes")
-    budget_amount: float = Field(alias="budgetAmount")
-    budget_justification: str = Field(alias="budgetJustification")
+    expected_outcomes: str = Field(default="Expected research outcomes", alias="expectedOutcomes")
+    budget_amount: float = Field(default=0.0, alias="budgetAmount")
+    budget_justification: str = Field(default="Budget justification to be provided", alias="budgetJustification")
     timeline: str = "12 months"
     status: str = "submitted"  # submitted, under_review, approved, rejected, withdrawn, editable, awaiting_signoff, signoff_complete, contract_pending, contract_received, needs_revision
     submission_date: str = Field(default_factory=lambda: datetime.utcnow().isoformat(), alias="submissionDate")

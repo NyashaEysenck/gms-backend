@@ -25,22 +25,16 @@ async def submit_application(
     application = await create_application(db, application_data)
     return ApplicationResponse(
         id=str(application.id),
-        grant_call_id=application.grant_id,
-        title=application.proposal_title,
+        grant_id=application.grant_id,
+        applicant_name=application.applicant_name,
         email=application.email,
-        researcher_name=application.applicant_name,
-        institution=application.institution,
-        department=application.department,
-        project_summary=application.project_summary,
-        objectives=application.objectives,
-        methodology=application.methodology,
-        expected_outcomes=application.expected_outcomes,
-        budget_amount=application.budget_amount,
-        budget_justification=application.budget_justification,
-        timeline=application.timeline,
+        proposal_title=application.proposal_title,
         status=application.status,
-        submitted_at=application.submission_date,
-        updated_at=application.updated_at.isoformat()
+        submission_date=application.submission_date,
+        review_comments=application.review_comments,
+        biodata=application.biodata,
+        deadline=application.deadline,
+        proposal_file_name=application.proposal_file_name
     )
 
 @router.get("/", response_model=List[ApplicationResponse])
@@ -68,22 +62,16 @@ async def list_applications(
     return [
         ApplicationResponse(
             id=str(application.id),
-            grant_call_id=application.grant_id,
-            title=application.proposal_title,
+            grant_id=application.grant_id,
+            applicant_name=application.applicant_name,
             email=application.email,
-            researcher_name=application.applicant_name,
-            institution=application.institution,
-            department=application.department,
-            project_summary=application.project_summary,
-            objectives=application.objectives,
-            methodology=application.methodology,
-            expected_outcomes=application.expected_outcomes,
-            budget_amount=application.budget_amount,
-            budget_justification=application.budget_justification,
-            timeline=application.timeline,
+            proposal_title=application.proposal_title,
             status=application.status,
-            submitted_at=application.submission_date,
-            updated_at=application.updated_at.isoformat()
+            submission_date=application.submission_date,
+            review_comments=application.review_comments,
+            biodata=application.biodata,
+            deadline=application.deadline,
+            proposal_file_name=application.proposal_file_name
         )
         for application in applications
     ]
@@ -104,22 +92,16 @@ async def get_application(
     
     return ApplicationResponse(
         id=str(application.id),
-        grant_call_id=application.grant_id,
-        title=application.proposal_title,
+        grant_id=application.grant_id,
+        applicant_name=application.applicant_name,
         email=application.email,
-        researcher_name=application.applicant_name,
-        institution=application.institution,
-        department=application.department,
-        project_summary=application.project_summary,
-        objectives=application.objectives,
-        methodology=application.methodology,
-        expected_outcomes=application.expected_outcomes,
-        budget_amount=application.budget_amount,
-        budget_justification=application.budget_justification,
-        timeline=application.timeline,
+        proposal_title=application.proposal_title,
         status=application.status,
-        submitted_at=application.submission_date,
-        updated_at=application.updated_at.isoformat()
+        submission_date=application.submission_date,
+        review_comments=application.review_comments,
+        biodata=application.biodata,
+        deadline=application.deadline,
+        proposal_file_name=application.proposal_file_name
     )
 
 @router.put("/{application_id}", response_model=ApplicationResponse)
@@ -143,22 +125,16 @@ async def update_application_info(
     
     return ApplicationResponse(
         id=str(updated_application.id),
-        grant_call_id=updated_application.grant_id,
-        title=updated_application.proposal_title,
+        grant_id=updated_application.grant_id,
+        applicant_name=updated_application.applicant_name,
         email=updated_application.email,
-        researcher_name=updated_application.applicant_name,
-        institution=updated_application.institution,
-        department=updated_application.department,
-        project_summary=updated_application.project_summary,
-        objectives=updated_application.objectives,
-        methodology=updated_application.methodology,
-        expected_outcomes=updated_application.expected_outcomes,
-        budget_amount=updated_application.budget_amount,
-        budget_justification=updated_application.budget_justification,
-        timeline=updated_application.timeline,
+        proposal_title=updated_application.proposal_title,
         status=updated_application.status,
-        submitted_at=updated_application.submission_date,
-        updated_at=updated_application.updated_at.isoformat()
+        submission_date=updated_application.submission_date,
+        review_comments=updated_application.review_comments,
+        biodata=updated_application.biodata,
+        deadline=updated_application.deadline,
+        proposal_file_name=updated_application.proposal_file_name
     )
 
 @router.post("/{application_id}/reviews")
@@ -204,3 +180,44 @@ async def delete_application_endpoint(
         raise HTTPException(status_code=404, detail="Application not found")
     
     return {"message": "Application deleted successfully"}
+
+
+@router.get("/{application_id}/document/{filename}")
+async def download_application_document(
+    application_id: str,
+    filename: str,
+    current_user = Depends(get_current_active_user)
+):
+    """Download application document for grants managers and reviewers"""
+    from fastapi.responses import FileResponse
+    from pathlib import Path
+    import os
+    
+    db = await get_database()
+    application = await get_application_by_id(db, application_id)
+    
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    # Check permissions - only grants managers, reviewers, and the applicant can download
+    if (current_user.role not in ["Grants Manager", "Admin"] and 
+        current_user.email != application.email):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Verify the filename matches the application's proposal file
+    if application.proposal_file_name != filename:
+        raise HTTPException(status_code=404, detail="Document not found for this application")
+    
+    # Construct file path - assuming documents are stored in uploads/applications/{email}/
+    upload_dir = Path(os.getenv("UPLOAD_DIR", "uploads"))
+    file_path = upload_dir / "applications" / application.email / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    
+    # Return the file for download
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type='application/octet-stream'
+    )
