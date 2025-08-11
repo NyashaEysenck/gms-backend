@@ -28,15 +28,22 @@ class UserResponse(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    role: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
 
 class TokenWithUser(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
     user: UserResponse
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+    token_type: Optional[str] = None
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
