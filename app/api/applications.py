@@ -3,10 +3,9 @@ from fastapi.responses import FileResponse
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
-from ..utils.dependencies import get_current_active_user, get_database
+from ..utils.dependencies import get_current_active_user, get_database, require_role
 from ..schemas.application import ApplicationCreate, ApplicationResponse, ApplicationUpdate
 from ..services.application_service import create_application, get_application_by_id, get_all_applications, get_applications_by_user, get_applications_by_status, get_applications_by_grant_call
-from ..config import get_settings
 import os
 from pathlib import Path
 
@@ -281,49 +280,7 @@ async def update_application_info(
         proposal_file_name=updated_application.proposal_file_name
     )
 
-@router.post("/{application_id}/reviews")
-async def submit_review(
-    application_id: str,
-    feedback_data: ReviewerFeedbackCreate,
-    current_user = Depends(require_role("Reviewer"))
-):
-    db = await get_database()
-    
-    # Ensure reviewer is submitting their own feedback
-    if feedback_data.reviewer_email != current_user.email:
-        raise HTTPException(status_code=403, detail="Can only submit your own reviews")
-    
-    application = await add_reviewer_feedback(db, application_id, feedback_data)
-    if not application:
-        raise HTTPException(status_code=404, detail="Application not found")
-    
-    return {"message": "Review submitted successfully"}
 
-@router.patch("/{application_id}/status")
-async def update_status(
-    application_id: str,
-    status: str,
-    decision_notes: Optional[str] = None,
-    current_user = Depends(require_role("Grants Manager"))
-):
-    db = await get_database()
-    application = await update_application_status(db, application_id, status, decision_notes)
-    if not application:
-        raise HTTPException(status_code=404, detail="Application not found")
-    
-    return {"message": "Application status updated successfully"}
-
-@router.delete("/{application_id}")
-async def delete_application_endpoint(
-    application_id: str,
-    current_user = Depends(require_role("Grants Manager"))
-):
-    db = await get_database()
-    success = await delete_application(db, application_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Application not found")
-    
-    return {"message": "Application deleted successfully"}
 
 
 @router.get("/{application_id}/document/{filename}")

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
-from ..dependencies import get_current_active_user, get_database
+from ..utils.dependencies import get_current_active_user, get_database
 from ..services.application_service import get_application_by_id
 from ..models.application import ReviewerFeedback
 import secrets
