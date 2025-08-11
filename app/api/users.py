@@ -27,7 +27,7 @@ async def create_new_user(
     )
 
 @router.get("/", response_model=List[UserResponse])
-async def list_users(current_user = Depends(require_role("Admin"))):
+async def list_users(current_user = Depends(get_current_active_user)):
     db = await get_database()
     users = await get_all_users(db)
     return [
