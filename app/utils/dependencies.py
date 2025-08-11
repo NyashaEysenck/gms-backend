@@ -21,7 +21,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 async def get_current_active_user(current_user = Depends(get_current_user)):
+    print(f"DEBUG AUTH: get_current_active_user called for {current_user.email} (role: {current_user.role}, status: {current_user.status})")
     if current_user.status != "active":
+        print(f"DEBUG AUTH: User {current_user.email} is inactive")
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 

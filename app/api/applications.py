@@ -5,7 +5,7 @@ from datetime import datetime
 from bson import ObjectId
 from ..utils.dependencies import get_current_active_user, get_database, require_role
 from ..schemas.application import ApplicationCreate, ApplicationResponse, ApplicationUpdate
-from ..services.application_service import create_application, get_application_by_id, get_all_applications, get_applications_by_user, get_applications_by_status, get_applications_by_grant_call
+from ..services.application_service import create_application, get_application_by_id, get_all_applications, get_applications_by_user, get_applications_by_status, get_applications_by_grant_call, update_application
 import os
 from pathlib import Path
 
@@ -244,6 +244,83 @@ async def withdraw_application(
         review_comments=updated_application.review_comments,
         biodata=updated_application.biodata,
         deadline=updated_application.deadline,
+        proposal_file_name=updated_application.proposal_file_name
+    )
+
+@router.put("/{application_id}/status", response_model=ApplicationResponse)
+async def update_application_status(
+    application_id: str,
+    status_data: dict,
+    current_user = Depends(get_current_active_user)
+):
+    """Update application status"""
+    print(f"DEBUG: Status update endpoint called for application {application_id}")
+    print(f"DEBUG: Status data: {status_data}")
+    print(f"DEBUG: Current user: {current_user.email} (role: {current_user.role})")
+    
+    db = await get_database()
+    
+    application = await get_application_by_id(db, application_id)
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    # Check permissions based on status change
+    new_status = status_data.get("status")
+    if not new_status:
+        raise HTTPException(status_code=400, detail="Status is required")
+    
+    # Researchers can only resubmit their own applications
+    if current_user.role == "Researcher":
+        print(f"DEBUG: Current user email: '{current_user.email}'")
+        print(f"DEBUG: Application email: '{application.email}'")
+        print(f"DEBUG: Email match: {application.email == current_user.email}")
+        print(f"DEBUG: Current user role: '{current_user.role}'")
+        print(f"DEBUG: New status: '{new_status}'")
+        
+        if application.email != current_user.email:
+            raise HTTPException(status_code=403, detail="You can only update your own applications")
+        if new_status not in ["submitted", "editable"]:
+            raise HTTPException(status_code=403, detail="Researchers can only resubmit or edit applications")
+    
+    # Grants managers can update any application status
+    elif current_user.role not in ["Grants Manager", "Admin"]:
+        raise HTTPException(status_code=403, detail="You do not have permission to update application status")
+    
+    # Update the application status
+    update_data = {"status": new_status}
+    if status_data.get("comments"):
+        update_data["review_comments"] = status_data["comments"]
+    
+    # If resubmitting, update submission date and make non-editable
+    if new_status == "submitted":
+        update_data["submission_date"] = datetime.utcnow().isoformat()
+        update_data["is_editable"] = False
+    elif new_status == "editable":
+        update_data["is_editable"] = True
+    
+    result = await db.applications.update_one(
+        {"_id": ObjectId(application_id)},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Failed to update application status")
+    
+    # Get updated application
+    updated_application = await get_application_by_id(db, application_id)
+    
+    return ApplicationResponse(
+        id=str(updated_application.id),
+        grant_id=updated_application.grant_id,
+        applicant_name=updated_application.applicant_name,
+        email=updated_application.email,
+        proposal_title=updated_application.proposal_title,
+        status=updated_application.status,
+        submission_date=updated_application.submission_date,
+        review_comments=updated_application.review_comments,
+        biodata=updated_application.biodata,
+        deadline=updated_application.deadline,
+        is_editable=updated_application.is_editable,
         proposal_file_name=updated_application.proposal_file_name
     )
 
