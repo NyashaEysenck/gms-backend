@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile
+from fastapi.responses import FileResponse
 from typing import List, Optional
-from ..database import get_database
-from ..schemas.application import ApplicationCreate, ApplicationUpdate, ApplicationResponse, ReviewerFeedbackCreate
-from ..services.application_service import (
-    create_application, get_all_applications, get_application_by_id,
-    get_applications_by_user, get_applications_by_status, get_applications_by_grant_call,
-    update_application, add_reviewer_feedback, update_application_status, delete_application
-)
-from ..utils.dependencies import get_current_active_user, require_role
+from datetime import datetime
+from bson import ObjectId
+from ..utils.dependencies import get_current_active_user, get_database
+from ..schemas.application import ApplicationCreate, ApplicationResponse, ApplicationUpdate
+from ..services.application_service import create_application, get_application_by_id, get_all_applications, get_applications_by_user, get_applications_by_status, get_applications_by_grant_call
+from ..config import get_settings
+import os
+from pathlib import Path
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -36,6 +37,36 @@ async def submit_application(
         deadline=application.deadline,
         proposal_file_name=application.proposal_file_name
     )
+
+@router.get("/my", response_model=List[ApplicationResponse])
+async def get_my_applications(
+    status_filter: Optional[str] = Query(None, description="Filter by status"),
+    current_user = Depends(get_current_active_user)
+):
+    """Get applications for the current user (researchers only)"""
+    db = await get_database()
+    
+    # Get applications for current user
+    applications = await get_applications_by_user(db, current_user.email)
+    if status_filter:
+        applications = [app for app in applications if app.status == status_filter]
+    
+    return [
+        ApplicationResponse(
+            id=str(application.id),
+            grant_id=application.grant_id,
+            applicant_name=application.applicant_name,
+            email=application.email,
+            proposal_title=application.proposal_title,
+            status=application.status,
+            submission_date=application.submission_date,
+            review_comments=application.review_comments,
+            biodata=application.biodata,
+            deadline=application.deadline,
+            proposal_file_name=application.proposal_file_name
+        )
+        for application in applications
+    ]
 
 @router.get("/", response_model=List[ApplicationResponse])
 async def list_applications(
@@ -102,6 +133,119 @@ async def get_application(
         biodata=application.biodata,
         deadline=application.deadline,
         proposal_file_name=application.proposal_file_name
+    )
+
+@router.put("/{application_id}/status", response_model=ApplicationResponse)
+async def update_application_status(
+    application_id: str,
+    status_data: dict,
+    current_user = Depends(get_current_active_user)
+):
+    """Update application status (for grants managers and admins)"""
+    db = await get_database()
+    
+    # Only grants managers and admins can update status
+    if current_user.role not in ["Grants Manager", "Admin"]:
+        raise HTTPException(status_code=403, detail="Only grants managers can update application status")
+    
+    application = await get_application_by_id(db, application_id)
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    # Update application status
+    new_status = status_data.get("status")
+    comments = status_data.get("comments", "")
+    
+    if not new_status:
+        raise HTTPException(status_code=400, detail="Status is required")
+    
+    # Update the application
+    update_data = {"status": new_status}
+    if comments:
+        update_data["review_comments"] = comments
+    
+    # Handle special status updates
+    if new_status == "needs_revision":
+        update_data["is_editable"] = True
+    elif new_status == "editable":
+        update_data["is_editable"] = True
+    else:
+        update_data["is_editable"] = False
+    
+    # Update in database
+    result = await db.applications.update_one(
+        {"_id": ObjectId(application_id)},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Failed to update application")
+    
+    # Get updated application
+    updated_application = await get_application_by_id(db, application_id)
+    
+    return ApplicationResponse(
+        id=str(updated_application.id),
+        grant_id=updated_application.grant_id,
+        applicant_name=updated_application.applicant_name,
+        email=updated_application.email,
+        proposal_title=updated_application.proposal_title,
+        status=updated_application.status,
+        submission_date=updated_application.submission_date,
+        review_comments=updated_application.review_comments,
+        biodata=updated_application.biodata,
+        deadline=updated_application.deadline,
+        proposal_file_name=updated_application.proposal_file_name
+    )
+
+@router.put("/{application_id}/withdraw", response_model=ApplicationResponse)
+async def withdraw_application(
+    application_id: str,
+    current_user = Depends(get_current_active_user)
+):
+    """Withdraw application (for researchers)"""
+    db = await get_database()
+    
+    application = await get_application_by_id(db, application_id)
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    # Check permissions - only the applicant can withdraw
+    if application.email != current_user.email:
+        raise HTTPException(status_code=403, detail="You can only withdraw your own applications")
+    
+    # Check if withdrawal is allowed
+    if application.status != "submitted":
+        raise HTTPException(status_code=400, detail="Only submitted applications can be withdrawn")
+    
+    # Check deadline
+    if application.deadline and datetime.utcnow() > datetime.fromisoformat(application.deadline.replace('Z', '+00:00')):
+        raise HTTPException(status_code=400, detail="Cannot withdraw application after deadline")
+    
+    # Update status to withdrawn
+    result = await db.applications.update_one(
+        {"_id": ObjectId(application_id)},
+        {"$set": {"status": "withdrawn"}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Failed to withdraw application")
+    
+    # Get updated application
+    updated_application = await get_application_by_id(db, application_id)
+    
+    return ApplicationResponse(
+        id=str(updated_application.id),
+        grant_id=updated_application.grant_id,
+        applicant_name=updated_application.applicant_name,
+        email=updated_application.email,
+        proposal_title=updated_application.proposal_title,
+        status=updated_application.status,
+        submission_date=updated_application.submission_date,
+        review_comments=updated_application.review_comments,
+        biodata=updated_application.biodata,
+        deadline=updated_application.deadline,
+        proposal_file_name=updated_application.proposal_file_name
     )
 
 @router.put("/{application_id}", response_model=ApplicationResponse)

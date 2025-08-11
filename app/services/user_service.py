@@ -2,7 +2,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from ..models.user import User, UserInDB
 from ..schemas.user import UserCreate, UserUpdate
 from ..utils.security import get_password_hash, verify_password
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from bson import ObjectId
 
 async def create_user(db: AsyncIOMotorDatabase, user_data: UserCreate) -> User:
@@ -87,4 +87,26 @@ async def reset_user_password(db: AsyncIOMotorDatabase, user_id: str) -> Optiona
     
     if result.modified_count:
         return temp_password
+    return None
+
+async def update_user_biodata(db: AsyncIOMotorDatabase, user_id: str, biodata: Dict[str, Any]) -> bool:
+    """Update user's biodata"""
+    if not ObjectId.is_valid(user_id):
+        return False
+    
+    result = await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"biodata": biodata}}
+    )
+    
+    return result.modified_count > 0
+
+async def get_user_biodata(db: AsyncIOMotorDatabase, user_id: str) -> Optional[Dict[str, Any]]:
+    """Get user's biodata"""
+    if not ObjectId.is_valid(user_id):
+        return None
+    
+    user = await db.users.find_one({"_id": ObjectId(user_id)}, {"biodata": 1})
+    if user:
+        return user.get("biodata")
     return None

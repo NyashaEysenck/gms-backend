@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import connect_to_mongo, close_mongo_connection
-from .api import auth, users, grant_calls, applications, projects, documents
+from .api import auth, users, applications, reviewers
 from .config import settings
 
 app = FastAPI(
@@ -22,10 +22,8 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(grant_calls.router)
 app.include_router(applications.router)
-app.include_router(projects.router)
-app.include_router(documents.router)
+app.include_router(reviewers.router)
 
 # Startup and shutdown events
 @app.on_event("startup")

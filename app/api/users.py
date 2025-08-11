@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List
+from typing import List, Dict, Any
 from ..database import get_database
 from ..schemas.user import UserCreate, UserUpdate, UserResponse
 from ..services.user_service import (
     create_user, get_all_users, get_user_by_id, 
-    update_user, delete_user, reset_user_password
+    update_user, delete_user, reset_user_password,
+    update_user_biodata, get_user_biodata
 )
 from ..utils.dependencies import get_current_active_user, require_role
 
@@ -104,3 +105,25 @@ async def reset_password(
         raise HTTPException(status_code=404, detail="User not found")
     
     return {"message": "Password reset successfully", "temporary_password": temp_password}
+
+@router.put("/me/biodata")
+async def update_my_biodata(
+    biodata: Dict[str, Any],
+    current_user = Depends(get_current_active_user)
+):
+    """Update the current user's biodata"""
+    db = await get_database()
+    success = await update_user_biodata(db, str(current_user.id), biodata)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "Biodata updated successfully"}
+
+@router.get("/me/biodata")
+async def get_my_biodata(
+    current_user = Depends(get_current_active_user)
+):
+    """Get the current user's biodata"""
+    db = await get_database()
+    biodata = await get_user_biodata(db, str(current_user.id))
+    return {"biodata": biodata}
