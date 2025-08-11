@@ -49,28 +49,24 @@ class ResearcherBiodata(BaseModel):
 class Application(BaseModel):
     """Application model matching frontend JSON structure exactly"""
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    grantId: str
-    applicantName: str
+    grant_id: str = Field(alias="grantId")
+    applicant_name: str = Field(alias="applicantName")
     email: str
-    proposalTitle: str
-    institution: str
-    department: str
-    projectSummary: str
-    objectives: str
-    methodology: str
-    expectedOutcomes: str
-    budgetAmount: float
-    budgetJustification: str
-    timeline: str
-    status: str
-    submissionDate: str
-    reviewComments: str
-    biodata: Optional[ResearcherBiodata] = None
+    proposal_title: str = Field(alias="proposalTitle")
+    institution: str = "Not specified"
+    department: str = "Not specified"
+    project_summary: str = Field(alias="projectSummary")
+    objectives: str = "Research objectives"
+    methodology: str = "Research methodology"
+    expected_outcomes: str = Field(alias="expectedOutcomes")
+    budget_amount: float = Field(alias="budgetAmount")
+    budget_justification: str = Field(alias="budgetJustification")
+    timeline: str = "12 months"
+    status: str = "submitted"  # submitted, under_review, approved, rejected, withdrawn, editable, awaiting_signoff, signoff_complete, contract_pending, contract_received, needs_revision
+    submission_date: str = Field(default_factory=lambda: datetime.utcnow().isoformat(), alias="submissionDate")
+    review_comments: str = Field(default="", alias="reviewComments")
     biodata: Optional[dict[str, Any]] = None  # Match frontend ResearcherBiodata interface
     deadline: Optional[str] = None
-    status: str = "submitted"  # submitted, under_review, approved, rejected, withdrawn, editable, awaiting_signoff, signoff_complete, contract_pending, contract_received, needs_revision
-    submission_date: str = Field(alias="submissionDate")  # Match frontend field name
-    review_comments: str = Field(default="", alias="reviewComments")  # Match frontend field name
     reviewer_feedback: List[ReviewerFeedback] = Field(default=[], alias="reviewerFeedback")
     final_decision: Optional[str] = Field(None, alias="finalDecision")
     decision_notes: Optional[str] = Field(None, alias="decisionNotes")

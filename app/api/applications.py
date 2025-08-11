@@ -25,10 +25,10 @@ async def submit_application(
     application = await create_application(db, application_data)
     return ApplicationResponse(
         id=str(application.id),
-        grant_call_id=application.grant_call_id,
-        title=application.title,
+        grant_call_id=application.grant_id,
+        title=application.proposal_title,
         email=application.email,
-        researcher_name=application.researcher_name,
+        researcher_name=application.applicant_name,
         institution=application.institution,
         department=application.department,
         project_summary=application.project_summary,
@@ -39,7 +39,7 @@ async def submit_application(
         budget_justification=application.budget_justification,
         timeline=application.timeline,
         status=application.status,
-        submitted_at=application.submitted_at.isoformat(),
+        submitted_at=application.submission_date,
         updated_at=application.updated_at.isoformat()
     )
 
@@ -68,10 +68,10 @@ async def list_applications(
     return [
         ApplicationResponse(
             id=str(application.id),
-            grant_call_id=application.grant_call_id,
-            title=application.title,
+            grant_call_id=application.grant_id,
+            title=application.proposal_title,
             email=application.email,
-            researcher_name=application.researcher_name,
+            researcher_name=application.applicant_name,
             institution=application.institution,
             department=application.department,
             project_summary=application.project_summary,
@@ -82,7 +82,7 @@ async def list_applications(
             budget_justification=application.budget_justification,
             timeline=application.timeline,
             status=application.status,
-            submitted_at=application.submitted_at.isoformat(),
+            submitted_at=application.submission_date,
             updated_at=application.updated_at.isoformat()
         )
         for application in applications
@@ -104,10 +104,10 @@ async def get_application(
     
     return ApplicationResponse(
         id=str(application.id),
-        grant_call_id=application.grant_call_id,
-        title=application.title,
+        grant_call_id=application.grant_id,
+        title=application.proposal_title,
         email=application.email,
-        researcher_name=application.researcher_name,
+        researcher_name=application.applicant_name,
         institution=application.institution,
         department=application.department,
         project_summary=application.project_summary,
@@ -118,7 +118,7 @@ async def get_application(
         budget_justification=application.budget_justification,
         timeline=application.timeline,
         status=application.status,
-        submitted_at=application.submitted_at.isoformat(),
+        submitted_at=application.submission_date,
         updated_at=application.updated_at.isoformat()
     )
 
@@ -143,10 +143,10 @@ async def update_application_info(
     
     return ApplicationResponse(
         id=str(updated_application.id),
-        grant_call_id=updated_application.grant_call_id,
-        title=updated_application.title,
+        grant_call_id=updated_application.grant_id,
+        title=updated_application.proposal_title,
         email=updated_application.email,
-        researcher_name=updated_application.researcher_name,
+        researcher_name=updated_application.applicant_name,
         institution=updated_application.institution,
         department=updated_application.department,
         project_summary=updated_application.project_summary,
@@ -157,7 +157,7 @@ async def update_application_info(
         budget_justification=updated_application.budget_justification,
         timeline=updated_application.timeline,
         status=updated_application.status,
-        submitted_at=updated_application.submitted_at.isoformat(),
+        submitted_at=updated_application.submission_date,
         updated_at=updated_application.updated_at.isoformat()
     )
 

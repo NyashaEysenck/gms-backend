@@ -6,41 +6,51 @@ from bson import ObjectId
 from datetime import datetime
 
 async def create_application(db: AsyncIOMotorDatabase, application_data: ApplicationCreate) -> Application:
-    application_dict = application_data.dict()
+    # Convert ApplicationCreate to dict using aliases (field names that match frontend)
+    application_dict = application_data.dict(by_alias=True)
+    
+    # Add default values for required fields that might be missing
+    application_dict.setdefault("submissionDate", datetime.utcnow().isoformat())
+    application_dict.setdefault("reviewComments", "")
+    application_dict.setdefault("status", "submitted")
+    
+    # Insert into database
     result = await db.applications.insert_one(application_dict)
     application_dict["_id"] = result.inserted_id
-    return Application(**application_dict)
+    
+    # Create Application model using by_alias=True to match field names
+    return Application.parse_obj(application_dict)
 
 async def get_application_by_id(db: AsyncIOMotorDatabase, application_id: str) -> Optional[Application]:
     if not ObjectId.is_valid(application_id):
         return None
     application = await db.applications.find_one({"_id": ObjectId(application_id)})
     if application:
-        return Application(**application)
+        return Application.parse_obj(application)
     return None
 
 async def get_all_applications(db: AsyncIOMotorDatabase) -> List[Application]:
     applications = []
     async for application in db.applications.find():
-        applications.append(Application(**application))
+        applications.append(Application.parse_obj(application))
     return applications
 
 async def get_applications_by_user(db: AsyncIOMotorDatabase, email: str) -> List[Application]:
     applications = []
     async for application in db.applications.find({"email": email}):
-        applications.append(Application(**application))
+        applications.append(Application.parse_obj(application))
     return applications
 
 async def get_applications_by_status(db: AsyncIOMotorDatabase, status: str) -> List[Application]:
     applications = []
     async for application in db.applications.find({"status": status}):
-        applications.append(Application(**application))
+        applications.append(Application.parse_obj(application))
     return applications
 
 async def get_applications_by_grant_call(db: AsyncIOMotorDatabase, grant_call_id: str) -> List[Application]:
     applications = []
     async for application in db.applications.find({"grant_call_id": grant_call_id}):
-        applications.append(Application(**application))
+        applications.append(Application.parse_obj(application))
     return applications
 
 async def update_application(db: AsyncIOMotorDatabase, application_id: str, application_update: ApplicationUpdate) -> Optional[Application]:
