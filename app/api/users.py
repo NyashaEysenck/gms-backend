@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Dict, Any
 from ..database import get_database
-from ..schemas.user import UserCreate, UserUpdate, UserResponse
+from ..schemas.user import UserCreate, UserUpdate, UserResponse, AdminUserUpdate, BiodataSchema
 from ..services.user_service import (
     create_user, get_all_users, get_user_by_id, 
     update_user, delete_user, reset_user_password,
-    update_user_biodata, get_user_biodata
+    update_user_biodata, get_user_biodata, get_user_by_email
 )
 from ..utils.dependencies import get_current_active_user, require_role
 
@@ -27,8 +27,8 @@ async def create_new_user(
         created_at=user.created_at.isoformat()
     )
 
-@router.get("/", response_model=List[UserResponse])
-async def list_users(current_user = Depends(get_current_active_user)):
+@router.get("/", response_model=List[UserResponse], dependencies=[Depends(require_role("Admin"))])
+async def list_users():
     db = await get_database()
     users = await get_all_users(db)
     return [
@@ -65,7 +65,7 @@ async def get_user(
 @router.put("/{user_id}", response_model=UserResponse)
 async def update_user_info(
     user_id: str,
-    user_update: UserUpdate,
+    user_update: AdminUserUpdate,
     current_user = Depends(require_role("Admin"))
 ):
     db = await get_database()

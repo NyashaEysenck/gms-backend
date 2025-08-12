@@ -11,6 +11,8 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
+
+class AdminUserUpdate(UserUpdate):
     role: Optional[str] = None
     status: Optional[str] = None
 
@@ -47,3 +49,9 @@ class TokenData(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+class BiodataSchema(BaseModel):
+    personal_info: Optional[dict] = None
+    contact_info: Optional[dict] = None
+    professional_background: Optional[dict] = None
+    research_interests: Optional[dict] = None
