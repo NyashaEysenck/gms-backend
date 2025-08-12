@@ -35,7 +35,9 @@ async def submit_application(
         review_comments=application.review_comments,
         biodata=application.biodata,
         deadline=application.deadline,
-        proposal_file_name=application.proposal_file_name
+        proposal_file_name=application.proposal_file_name,
+        proposal_file_size=application.proposal_file_size,
+        proposal_file_type=application.proposal_file_type
     )
 
 @router.get("/my", response_model=List[ApplicationResponse])
