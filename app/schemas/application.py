@@ -42,6 +42,9 @@ class ApplicationCreate(BaseModel):
     biodata: Optional[Dict[str, Any]] = None  # Match frontend ResearcherBiodata interface
     deadline: Optional[str] = None
     proposal_file_name: Optional[str] = Field(None, alias="proposalFileName")
+    proposal_file_data: Optional[str] = Field(None, alias="proposalFileData")  # Base64 encoded file content
+    proposal_file_size: Optional[int] = Field(None, alias="proposalFileSize")  # File size in bytes
+    proposal_file_type: Optional[str] = Field(None, alias="proposalFileType")  # MIME type
     
     class Config:
         allow_population_by_field_name = True
@@ -66,6 +69,9 @@ class ApplicationUpdate(BaseModel):
     revision_count: Optional[int] = Field(None, alias="revisionCount")
     original_submission_date: Optional[str] = Field(None, alias="originalSubmissionDate")
     proposal_file_name: Optional[str] = Field(None, alias="proposalFileName")
+    proposal_file_data: Optional[str] = Field(None, alias="proposalFileData")  # Base64 encoded file content
+    proposal_file_size: Optional[int] = Field(None, alias="proposalFileSize")  # File size in bytes
+    proposal_file_type: Optional[str] = Field(None, alias="proposalFileType")  # MIME type
     
     class Config:
         allow_population_by_field_name = True
@@ -119,6 +125,8 @@ class ApplicationResponse(BaseModel):
     revision_count: Optional[int] = Field(alias="revisionCount")
     original_submission_date: Optional[str] = Field(alias="originalSubmissionDate")
     proposal_file_name: Optional[str] = Field(alias="proposalFileName")
+    proposal_file_size: Optional[int] = Field(alias="proposalFileSize")  # File size in bytes
+    proposal_file_type: Optional[str] = Field(alias="proposalFileType")  # MIME type
     
     class Config:
         allow_population_by_field_name = True

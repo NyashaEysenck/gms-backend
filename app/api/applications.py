@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
+import base64
 from ..utils.dependencies import get_current_active_user, get_database, require_role
 from ..schemas.application import ApplicationCreate, ApplicationResponse, ApplicationUpdate
 from ..services.application_service import create_application, get_application_by_id, get_all_applications, get_applications_by_user, get_applications_by_status, get_applications_by_grant_call, update_application
@@ -366,11 +367,7 @@ async def download_application_document(
     filename: str,
     current_user = Depends(get_current_active_user)
 ):
-    """Download application document for grants managers and reviewers"""
-    from fastapi.responses import FileResponse
-    from pathlib import Path
-    import os
-    
+    """Download application document stored as base64 in MongoDB"""
     db = await get_database()
     application = await get_application_by_id(db, application_id)
     
@@ -386,16 +383,25 @@ async def download_application_document(
     if application.proposal_file_name != filename:
         raise HTTPException(status_code=404, detail="Document not found for this application")
     
-    # Construct file path - assuming documents are stored in uploads/applications/{email}/
-    upload_dir = Path(os.getenv("UPLOAD_DIR", "uploads"))
-    file_path = upload_dir / "applications" / application.email / filename
+    # Check if file data exists in database
+    if not application.proposal_file_data:
+        raise HTTPException(status_code=404, detail="File data not found in database")
     
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found on disk")
-    
-    # Return the file for download
-    return FileResponse(
-        path=file_path,
-        filename=filename,
-        media_type='application/octet-stream'
-    )
+    try:
+        # Decode base64 file data
+        file_bytes = base64.b64decode(application.proposal_file_data)
+        
+        # Determine media type
+        media_type = application.proposal_file_type or 'application/octet-stream'
+        
+        # Return the file as a response
+        return Response(
+            content=file_bytes,
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Length": str(len(file_bytes))
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error decoding file data: {str(e)}")
