@@ -65,7 +65,9 @@ async def get_my_applications(
             review_comments=application.review_comments,
             biodata=application.biodata,
             deadline=application.deadline,
-            proposal_file_name=application.proposal_file_name
+            proposal_file_name=application.proposal_file_name,
+            proposal_file_size=application.proposal_file_size,
+            proposal_file_type=application.proposal_file_type
         )
         for application in applications
     ]
@@ -104,7 +106,9 @@ async def list_applications(
             review_comments=application.review_comments,
             biodata=application.biodata,
             deadline=application.deadline,
-            proposal_file_name=application.proposal_file_name
+            proposal_file_name=application.proposal_file_name,
+            proposal_file_size=application.proposal_file_size,
+            proposal_file_type=application.proposal_file_type
         )
         for application in applications
     ]
@@ -134,7 +138,9 @@ async def get_application(
         review_comments=application.review_comments,
         biodata=application.biodata,
         deadline=application.deadline,
-        proposal_file_name=application.proposal_file_name
+        proposal_file_name=application.proposal_file_name,
+        proposal_file_size=application.proposal_file_size,
+        proposal_file_type=application.proposal_file_type
     )
 
 @router.put("/{application_id}/status", response_model=ApplicationResponse)
@@ -197,7 +203,9 @@ async def update_application_status(
         review_comments=updated_application.review_comments,
         biodata=updated_application.biodata,
         deadline=updated_application.deadline,
-        proposal_file_name=updated_application.proposal_file_name
+        proposal_file_name=updated_application.proposal_file_name,
+        proposal_file_size=updated_application.proposal_file_size,
+        proposal_file_type=updated_application.proposal_file_type
     )
 
 @router.put("/{application_id}/withdraw", response_model=ApplicationResponse)
@@ -247,7 +255,9 @@ async def withdraw_application(
         review_comments=updated_application.review_comments,
         biodata=updated_application.biodata,
         deadline=updated_application.deadline,
-        proposal_file_name=updated_application.proposal_file_name
+        proposal_file_name=updated_application.proposal_file_name,
+        proposal_file_size=updated_application.proposal_file_size,
+        proposal_file_type=updated_application.proposal_file_type
     )
 
 @router.put("/{application_id}/status", response_model=ApplicationResponse)
@@ -324,7 +334,9 @@ async def update_application_status(
         biodata=updated_application.biodata,
         deadline=updated_application.deadline,
         is_editable=updated_application.is_editable,
-        proposal_file_name=updated_application.proposal_file_name
+        proposal_file_name=updated_application.proposal_file_name,
+        proposal_file_size=updated_application.proposal_file_size,
+        proposal_file_type=updated_application.proposal_file_type
     )
 
 @router.put("/{application_id}", response_model=ApplicationResponse)
