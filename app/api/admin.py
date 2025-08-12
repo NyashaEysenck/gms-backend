@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from ..dependencies import get_current_active_user
+from ..utils.dependencies import get_current_active_user
 from ..models.user import User
 from ..database.loader import load_data_from_json
 
