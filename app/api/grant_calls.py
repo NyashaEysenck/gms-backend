@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
-from ..database import get_database
+from ..db_config import get_database
 from ..schemas.grant_call import GrantCallCreate, GrantCallUpdate, GrantCallResponse
 from ..services.grant_call_service import (
     create_grant_call, get_all_grant_calls, get_grant_call_by_id,

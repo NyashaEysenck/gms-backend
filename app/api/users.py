@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Dict, Any
-from ..database import get_database
+from ..db_config import get_database
 from ..schemas.user import UserCreate, UserUpdate, UserResponse, AdminUserUpdate, BiodataSchema
 from ..services.user_service import (
     create_user, get_all_users, get_user_by_id, 

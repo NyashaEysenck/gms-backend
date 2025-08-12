@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import connect_to_mongo, close_mongo_connection
+from .db_config import connect_to_mongo, close_mongo_connection
 from .api import auth, users, applications, admin, reviewers
 from .config import settings
 

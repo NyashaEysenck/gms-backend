@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from ..utils.security import verify_token
 from ..services.user_service import get_user_by_email
-from ..database import get_database
+from ..db_config import get_database
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 

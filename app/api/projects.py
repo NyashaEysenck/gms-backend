@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from typing import List, Optional
-from ..database import get_database
+from ..db_config import get_database
 from ..services.project_service import (
     create_project, get_all_projects, get_project_by_id, get_projects_by_user,
     update_project_status, add_milestone, submit_requisition, add_partner,

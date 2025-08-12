@@ -4,7 +4,7 @@ from typing import List, Optional
 import os
 import shutil
 from pathlib import Path
-from ..database import get_database
+from ..db_config import get_database
 from ..services.document_service import (
     create_document, get_all_documents, get_document_by_id,
     get_documents_by_folder, get_documents_by_user, search_documents,
