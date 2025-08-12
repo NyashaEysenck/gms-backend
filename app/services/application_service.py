@@ -57,7 +57,8 @@ async def update_application(db: AsyncIOMotorDatabase, application_id: str, appl
     if not ObjectId.is_valid(application_id):
         return None
     
-    update_data = {k: v for k, v in application_update.dict().items() if v is not None}
+    # Use alias field names to keep DB keys consistent with API (camelCase)
+    update_data = application_update.dict(by_alias=True, exclude_none=True)
     if not update_data:
         return None
     
