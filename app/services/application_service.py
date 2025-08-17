@@ -14,6 +14,19 @@ async def create_application(db: AsyncIOMotorDatabase, application_data: Applica
     application_dict.setdefault("reviewComments", "")
     application_dict.setdefault("status", "submitted")
     
+    # Initialize empty arrays for fields that might be missing
+    application_dict.setdefault("reviewerFeedback", [])
+    application_dict.setdefault("signOffApprovals", [])
+    application_dict.setdefault("assignedReviewers", [])
+    
+    # Set default values for optional fields
+    application_dict.setdefault("revisionCount", 0)
+    application_dict.setdefault("isEditable", False)
+    application_dict.setdefault("awardAmount", None)
+    application_dict.setdefault("contractFileName", None)
+    application_dict.setdefault("awardLetterGenerated", False)
+    application_dict.setdefault("originalSubmissionDate", application_dict.get("submissionDate"))
+    
     # Insert into database
     result = await db.applications.insert_one(application_dict)
     application_dict["_id"] = result.inserted_id
@@ -31,8 +44,21 @@ async def get_application_by_id(db: AsyncIOMotorDatabase, application_id: str) -
 
 async def get_all_applications(db: AsyncIOMotorDatabase) -> List[Application]:
     applications = []
-    async for application in db.applications.find():
-        applications.append(Application.parse_obj(application))
+    async for application_doc in db.applications.find():
+        try:
+            # Ensure required fields exist with defaults
+            application_doc.setdefault("reviewerFeedback", [])
+            application_doc.setdefault("signOffApprovals", [])
+            application_doc.setdefault("assignedReviewers", [])
+            application_doc.setdefault("revisionCount", 0)
+            application_doc.setdefault("isEditable", False)
+            
+            application = Application.parse_obj(application_doc)
+            applications.append(application)
+        except Exception as e:
+            print(f"Error parsing application document: {e}")
+            print(f"Document: {application_doc}")
+            continue
     return applications
 
 async def get_applications_by_user(db: AsyncIOMotorDatabase, email: str) -> List[Application]:

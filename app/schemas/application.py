@@ -26,26 +26,29 @@ class SignOffApprovalCreate(BaseModel):
         allow_population_by_field_name = True
 
 class ApplicationCreate(BaseModel):
-    grant_id: str = Field(alias="grantId")  # Match frontend field name
-    applicant_name: str = Field(alias="applicantName")  # Match frontend field name
-    email: EmailStr
-    proposal_title: str = Field(alias="proposalTitle")  # Match frontend field name
-    institution: str = "Not specified"
-    department: str = "Not specified"
-    project_summary: str = Field(default="Project summary to be provided", alias="projectSummary")
-    objectives: str = "Research objectives"
-    methodology: str = "Research methodology"
-    expected_outcomes: str = Field(default="Expected research outcomes", alias="expectedOutcomes")
-    budget_amount: float = Field(default=0.0, alias="budgetAmount")
-    budget_justification: str = Field(default="Budget justification to be provided", alias="budgetJustification")
-    timeline: str = "12 months"
-    biodata: Optional[Dict[str, Any]] = None  # Match frontend ResearcherBiodata interface
+    grantId: str = Field(..., alias="grantId")
+    applicantName: str = Field(..., alias="applicantName")
+    email: EmailStr = Field(..., alias="email")
+    proposalTitle: str = Field(..., alias="proposalTitle")
+    institution: str = Field(..., alias="institution")
+    department: str = Field(..., alias="department")
+    projectSummary: str = Field(..., alias="projectSummary")
+    objectives: str = Field(..., alias="objectives")
+    methodology: str = Field(..., alias="methodology")
+    expectedOutcomes: str = Field(..., alias="expectedOutcomes")
+    budgetAmount: float = Field(..., alias="budgetAmount")
+    budgetJustification: str = Field(..., alias="budgetJustification")
+    timeline: str = Field(..., alias="timeline")
+    biodata: Optional[Dict[str, Any]] = Field(None, alias="biodata")
     deadline: Optional[str] = None
-    proposal_file_name: Optional[str] = Field(None, alias="proposalFileName")
-    proposal_file_data: Optional[str] = Field(None, alias="proposalFileData")  # Base64 encoded file content
-    proposal_file_size: Optional[int] = Field(None, alias="proposalFileSize")  # File size in bytes
-    proposal_file_type: Optional[str] = Field(None, alias="proposalFileType")  # MIME type
-    
+    proposalFileName: Optional[str] = Field(None, alias="proposalFileName")
+    proposalFileData: Optional[str] = Field(None, alias="proposalFileData")
+    proposalFileSize: Optional[int] = Field(None, alias="proposalFileSize")
+    proposalFileType: Optional[str] = Field(None, alias="proposalFileType")
+    reviewerFeedback: List[ReviewerFeedbackCreate] = Field(default_factory=list, alias="reviewerFeedback")
+    signOffApprovals: List = Field(default_factory=list, alias="signOffApprovals")
+    assignedReviewers: List[str] = Field(default_factory=list, alias="assignedReviewers")
+
     class Config:
         allow_population_by_field_name = True
 

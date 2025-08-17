@@ -16,6 +16,7 @@ async def create_new_grant_call(
     grant_call_data: GrantCallCreate,
     current_user = Depends(require_role("Grants Manager"))
 ):
+   
     db = await get_database()
     grant_call = await create_grant_call(db, grant_call_data)
     return GrantCallResponse(
@@ -29,8 +30,8 @@ async def create_new_grant_call(
         requirements=grant_call.requirements,
         status=grant_call.status,
         visibility=grant_call.visibility,
-        created_at=grant_call.created_at.isoformat(),
-        updated_at=grant_call.updated_at.isoformat()
+        created_at=grant_call.created_at.isoformat() if grant_call.created_at else "",
+        updated_at=grant_call.updated_at.isoformat() if grant_call.updated_at else ""
     )
 
 @router.get("/", response_model=List[GrantCallResponse])
@@ -39,6 +40,8 @@ async def list_grant_calls(
     status_filter: Optional[str] = Query(None, description="Filter by status (Open/Closed)"),
     current_user = Depends(get_current_active_user)
 ):
+
+
     db = await get_database()
     
     if status_filter == "Open":
@@ -47,8 +50,8 @@ async def list_grant_calls(
         grant_calls = await get_grant_calls_by_type(db, type_filter)
     else:
         grant_calls = await get_all_grant_calls(db)
-    
-    return [
+
+    return_data = [
         GrantCallResponse(
             id=str(grant_call.id),
             title=grant_call.title,
@@ -60,11 +63,13 @@ async def list_grant_calls(
             requirements=grant_call.requirements,
             status=grant_call.status,
             visibility=grant_call.visibility,
-            created_at=grant_call.created_at.isoformat(),
-            updated_at=grant_call.updated_at.isoformat()
+            created_at=grant_call.created_at.isoformat() if grant_call.created_at else "",
+            updated_at=grant_call.updated_at.isoformat() if grant_call.updated_at else ""
         )
         for grant_call in grant_calls
     ]
+  
+    return return_data
 
 @router.get("/{grant_call_id}", response_model=GrantCallResponse)
 async def get_grant_call(
@@ -87,8 +92,8 @@ async def get_grant_call(
         requirements=grant_call.requirements,
         status=grant_call.status,
         visibility=grant_call.visibility,
-        created_at=grant_call.created_at.isoformat(),
-        updated_at=grant_call.updated_at.isoformat()
+        created_at=grant_call.created_at.isoformat() if grant_call.created_at else "",
+        updated_at=grant_call.updated_at.isoformat() if grant_call.updated_at else ""
     )
 
 @router.put("/{grant_call_id}", response_model=GrantCallResponse)
@@ -113,8 +118,8 @@ async def update_grant_call_info(
         requirements=grant_call.requirements,
         status=grant_call.status,
         visibility=grant_call.visibility,
-        created_at=grant_call.created_at.isoformat(),
-        updated_at=grant_call.updated_at.isoformat()
+        created_at=grant_call.created_at.isoformat() if grant_call.created_at else "",
+        updated_at=grant_call.updated_at.isoformat() if grant_call.updated_at else ""
     )
 
 @router.patch("/{grant_call_id}/toggle-status", response_model=GrantCallResponse)
@@ -138,8 +143,8 @@ async def toggle_status(
         requirements=grant_call.requirements,
         status=grant_call.status,
         visibility=grant_call.visibility,
-        created_at=grant_call.created_at.isoformat(),
-        updated_at=grant_call.updated_at.isoformat()
+        created_at=grant_call.created_at.isoformat() if grant_call.created_at else "",
+        updated_at=grant_call.updated_at.isoformat() if grant_call.updated_at else ""
     )
 
 @router.delete("/{grant_call_id}")

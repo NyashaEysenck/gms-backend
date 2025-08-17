@@ -25,6 +25,7 @@ async def get_current_active_user(current_user = Depends(get_current_user)):
     if current_user.status != "active":
         print(f"DEBUG AUTH: User {current_user.email} is inactive")
         raise HTTPException(status_code=400, detail="Inactive user")
+    print(f"DEBUG AUTH: User {current_user.email} is active")
     return current_user
 
 def require_role(required_role: str):

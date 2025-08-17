@@ -19,26 +19,26 @@ class PyObjectId(ObjectId):
         field_schema.update(type="string")
 
 class ReviewerFeedback(BaseModel):
-    id: str
-    applicationId: str
-    reviewerEmail: str
+    id: Optional[str] = None
+    applicationId: Optional[str] = None
+    reviewerEmail: Optional[str] = None
     reviewerName: Optional[str] = None
-    comments: str
-    decision: str  # 'approve' | 'reject' | 'request_changes'
+    comments: Optional[str] = None
+    decision: Optional[str] = None  # 'approve' | 'reject' | 'request_changes'
     annotatedFileName: Optional[str] = None
-    submittedAt: str
-    reviewToken: str
+    submittedAt: Optional[str] = None
+    reviewToken: Optional[str] = None
 
 class SignOffApproval(BaseModel):
-    id: str
-    applicationId: str
-    role: str  # 'DORI' | 'DVC' | 'VC'
-    approverEmail: str
+    id: Optional[str] = None
+    applicationId: Optional[str] = None
+    role: Optional[str] = None  # 'DORI' | 'DVC' | 'VC'
+    approverEmail: Optional[str] = None
     approverName: Optional[str] = None
-    status: str  # 'pending' | 'approved' | 'rejected'
+    status: Optional[str] = None  # 'pending' | 'approved' | 'rejected'
     comments: Optional[str] = None
     approvedAt: Optional[str] = None
-    signOffToken: str
+    signOffToken: Optional[str] = None
 
 class ResearcherBiodata(BaseModel):
     name: str
