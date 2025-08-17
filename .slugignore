@@ -1,0 +1,4 @@
+# Files to exclude from Heroku slug
+# Keep data files for production deployment
+!data/
+!data/*.json
