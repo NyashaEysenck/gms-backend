@@ -21,6 +21,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 async def load_frontend_data():
     """Load all frontend JSON data exactly as-is into MongoDB."""
     print("🚀 Loading Frontend Data into MongoDB...")
+    print(f"📍 Current working directory: {os.getcwd()}")
+    print(f"📁 Script directory: {os.path.dirname(os.path.abspath(__file__))}")
     print(f"📍 MongoDB URI: {settings.mongodb_uri}")
     print(f"📊 Database: {settings.database_name}")
     print()
@@ -29,13 +31,22 @@ async def load_frontend_data():
     client = AsyncIOMotorClient(settings.mongodb_uri)
     db = client[settings.database_name]
     
-    # Frontend data directory
-    frontend_data_dir = "data"
+    # Use absolute path for data directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    frontend_data_dir = os.path.join(script_dir, "data")
+    
+    # Check if data directory exists
+    if not os.path.exists(frontend_data_dir):
+        print(f"❌ Data directory '{frontend_data_dir}' not found!")
+        print(f"📁 Available files in script dir: {os.listdir(script_dir) if os.path.exists(script_dir) else 'Script dir not found'}")
+        print(f"📁 Available files in current dir: {os.listdir('.') if os.path.exists('.') else 'Current dir not found'}")
+        raise FileNotFoundError(f"Data directory '{frontend_data_dir}' not found")
     
     try:
         # 1. Load Users (with password hashing)
         print("👥 Loading users...")
-        with open(f"{frontend_data_dir}/users.json", "r") as f:
+        users_file = os.path.join(frontend_data_dir, "users.json")
+        with open(users_file, "r") as f:
             users_data = json.load(f)
         
         # Clear existing users
@@ -54,7 +65,8 @@ async def load_frontend_data():
         
         # 2. Load Grant Calls (exactly as-is)
         print("📋 Loading grant calls...")
-        with open(f"{frontend_data_dir}/grantCalls.json", "r") as f:
+        grant_calls_file = os.path.join(frontend_data_dir, "grantCalls.json")
+        with open(grant_calls_file, "r") as f:
             grant_calls_data = json.load(f)
         
         # Clear existing grant calls
@@ -66,7 +78,8 @@ async def load_frontend_data():
         
         # 3. Load Applications (with data structure transformation)
         print("📝 Loading applications...")
-        with open(f"{frontend_data_dir}/applications.json", "r") as f:
+        applications_file = os.path.join(frontend_data_dir, "applications.json")
+        with open(applications_file, "r") as f:
             applications_data = json.load(f)
         
         # Clear existing applications
@@ -106,7 +119,8 @@ async def load_frontend_data():
         
         # 4. Load Projects (exactly as-is)
         print("🚀 Loading projects...")
-        with open(f"{frontend_data_dir}/projects.json", "r") as f:
+        projects_file = os.path.join(frontend_data_dir, "projects.json")
+        with open(projects_file, "r") as f:
             projects_data = json.load(f)
         
         # Clear existing projects
@@ -139,11 +153,43 @@ async def load_frontend_data():
         for user in users_data["users"]:
             print(f"• {user['email']} / {user['password']} ({user['role']})")
         
+        return True  # Indicate success
+        
+    except FileNotFoundError as e:
+        print(f"❌ File not found: {e}")
+        return False
+    except json.JSONDecodeError as e:
+        print(f"❌ JSON parsing error: {e}")
+        return False
     except Exception as e:
         print(f"❌ Error loading data: {e}")
-        raise
+        import traceback
+        traceback.print_exc()
+        return False
     finally:
         client.close()
 
+def main():
+    """Main function to run the async loader with proper error handling."""
+    try:
+        print("🔄 Starting frontend data loader...")
+        success = asyncio.run(load_frontend_data())
+        
+        if success:
+            print("✅ Data loading completed successfully!")
+            sys.exit(0)  # Explicit success exit
+        else:
+            print("❌ Data loading failed!")
+            sys.exit(1)  # Explicit failure exit
+            
+    except KeyboardInterrupt:
+        print("\n⚠️  Data loading interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
 if __name__ == "__main__":
-    asyncio.run(load_frontend_data())
+    main()
