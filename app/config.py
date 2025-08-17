@@ -15,13 +15,7 @@ class Settings(BaseSettings):
     frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:8080")
     
     # CORS settings
-    allowed_origins: list = [
-        "http://localhost:5173",  # Vite development server (default)
-        "http://127.0.0.1:5173",
-        "http://localhost:8080",  # Frontend development server
-        "http://127.0.0.1:8080",
-        "http://localhost:3000",  # Alternative frontend port
-        "http://127.0.0.1:3000"
+    allowed_origins: list = ["*"
     ]
     
     def __init__(self, **kwargs):

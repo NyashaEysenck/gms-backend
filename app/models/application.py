@@ -18,16 +18,13 @@ class PyObjectId(ObjectId):
     def __modify_schema__(cls, field_schema):
         field_schema.update(type="string")
 
-class ReviewerFeedback(BaseModel):
-    id: Optional[str] = None
-    applicationId: Optional[str] = None
-    reviewerEmail: Optional[str] = None
-    reviewerName: Optional[str] = None
-    comments: Optional[str] = None
-    decision: Optional[str] = None  # 'approve' | 'reject' | 'request_changes'
-    annotatedFileName: Optional[str] = None
-    submittedAt: Optional[str] = None
-    reviewToken: Optional[str] = None
+class ReviewHistoryEntry(BaseModel):
+    id: str
+    reviewerName: str
+    reviewerEmail: str
+    comments: str
+    submittedAt: str
+    status: str  # The status set when this review was submitted
 
 class SignOffApproval(BaseModel):
     id: Optional[str] = None
@@ -67,11 +64,10 @@ class Application(BaseModel):
     review_comments: str = Field(default="", alias="reviewComments")
     biodata: Optional[dict[str, Any]] = None  # Match frontend ResearcherBiodata interface
     deadline: Optional[str] = None
-    reviewer_feedback: List[ReviewerFeedback] = Field(default=[], alias="reviewerFeedback")
+    reviewHistory: List[ReviewHistoryEntry] = Field(default=[], alias="reviewHistory")
     final_decision: Optional[str] = Field(None, alias="finalDecision")
     decision_notes: Optional[str] = Field(None, alias="decisionNotes")
     is_editable: Optional[bool] = Field(None, alias="isEditable")
-    assigned_reviewers: Optional[List[str]] = Field(None, alias="assignedReviewers")
     sign_off_approvals: Optional[List[SignOffApproval]] = Field(None, alias="signOffApprovals")
     award_amount: Optional[float] = Field(None, alias="awardAmount")
     contract_file_name: Optional[str] = Field(None, alias="contractFileName")

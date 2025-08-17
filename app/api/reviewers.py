@@ -4,7 +4,7 @@ from datetime import datetime
 from bson import ObjectId
 from ..utils.dependencies import get_current_active_user, get_database
 from ..services.application_service import get_application_by_id
-from ..models.application import ReviewerFeedback
+from ..models.application import ReviewHistoryEntry
 import secrets
 import string
 
@@ -95,54 +95,18 @@ async def get_application_by_review_token(token: str):
         proposal_file_name=application.get("proposal_file_name")
     )
 
-@router.post("/feedback/{application_id}")
-async def submit_reviewer_feedback(
-    application_id: str,
-    feedback_data: dict,
-    current_user = Depends(get_current_active_user)
-):
-    """Submit reviewer feedback for an application"""
-    db = await get_database()
-    
-    application = await get_application_by_id(db, application_id)
-    if not application:
-        raise HTTPException(status_code=404, detail="Application not found")
-    
-    # Create feedback entry
-    feedback = {
-        "id": generate_review_token(),
-        "application_id": application_id,
-        "reviewer_email": feedback_data.get("reviewer_email"),
-        "reviewer_name": feedback_data.get("reviewer_name", ""),
-        "comments": feedback_data.get("comments", ""),
-        "decision": feedback_data.get("decision", "approve"),
-        "annotated_file_name": feedback_data.get("annotated_file_name"),
-        "submitted_at": datetime.utcnow().isoformat(),
-        "review_token": feedback_data.get("review_token", "")
-    }
-    
-    # Add feedback to application
-    result = await db.applications.update_one(
-        {"_id": ObjectId(application_id)},
-        {
-            "$push": {"reviewer_feedback": feedback}
-        }
-    )
-    
-    if result.modified_count == 0:
-        raise HTTPException(status_code=400, detail="Failed to submit feedback")
-    
-    return {
-        "message": "Feedback submitted successfully",
-        "feedback_id": feedback["id"]
-    }
+# Deprecated: Use /applications/{application_id}/review endpoint instead
+# @router.post("/feedback/{application_id}")
+# async def submit_reviewer_feedback(...):
+#     """DEPRECATED: Use POST /applications/{application_id}/review instead"""
+#     raise HTTPException(status_code=410, detail="Endpoint deprecated. Use POST /applications/{application_id}/review")
 
 @router.get("/feedback/{application_id}")
 async def get_reviewer_feedback(
     application_id: str,
     current_user = Depends(get_current_active_user)
 ):
-    """Get all reviewer feedback for an application"""
+    """Get all reviewer feedback for an application - Updated to use review_history"""
     db = await get_database()
     
     application = await get_application_by_id(db, application_id)
@@ -153,10 +117,10 @@ async def get_reviewer_feedback(
     if current_user.role == "Researcher" and application.email != current_user.email:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    # Get application with feedback
+    # Get application with review history
     app_data = await db.applications.find_one({"_id": ObjectId(application_id)})
     
     return {
         "application_id": application_id,
-        "feedback": app_data.get("reviewer_feedback", [])
+        "feedback": app_data.get("reviewHistory", [])
     }

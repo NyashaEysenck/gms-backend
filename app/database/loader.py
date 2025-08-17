@@ -41,11 +41,40 @@ async def load_data_from_json():
         if grant_calls_data.get("grantCalls"):
             await db.grant_calls.insert_many(grant_calls_data["grantCalls"])
 
-        # 4. Load Applications
+        # 4. Load Applications (with data structure transformation)
         with open(os.path.join(frontend_data_dir, "applications.json"), "r") as f:
             applications_data = json.load(f)
+        
         if applications_data.get("applications"):
-            await db.applications.insert_many(applications_data["applications"])
+            # Transform applications to match new data structure
+            applications_to_insert = []
+            for app in applications_data["applications"]:
+                app_doc = app.copy()
+                
+                # Transform reviewerFeedback to reviewHistory
+                if "reviewerFeedback" in app_doc:
+                    review_history = []
+                    for feedback in app_doc["reviewerFeedback"]:
+                        # Transform old feedback structure to new review history entry
+                        history_entry = {
+                            "id": feedback.get("id", ""),
+                            "reviewerName": feedback.get("reviewerName", ""),
+                            "reviewerEmail": feedback.get("reviewerEmail", ""),
+                            "comments": feedback.get("comments", ""),
+                            "submittedAt": feedback.get("submittedAt", ""),
+                            "status": feedback.get("decision", "under_review")  # Map decision to status
+                        }
+                        review_history.append(history_entry)
+                    
+                    app_doc["reviewHistory"] = review_history
+                    # Remove old field
+                    del app_doc["reviewerFeedback"]
+                else:
+                    app_doc["reviewHistory"] = []
+                
+                applications_to_insert.append(app_doc)
+            
+            await db.applications.insert_many(applications_to_insert)
 
         # 5. Load Projects
         with open(os.path.join(frontend_data_dir, "projects.json"), "r") as f:

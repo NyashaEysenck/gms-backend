@@ -1,14 +1,11 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict, Any
 
-class ReviewerFeedbackCreate(BaseModel):
-    application_id: str = Field(alias="applicationId")
+class ReviewHistoryEntryCreate(BaseModel):
+    reviewer_name: str = Field(alias="reviewerName")
     reviewer_email: EmailStr = Field(alias="reviewerEmail")
-    reviewer_name: Optional[str] = Field(None, alias="reviewerName")
     comments: str
-    decision: str  # approve, reject, request_changes
-    annotated_file_name: Optional[str] = Field(None, alias="annotatedFileName")
-    review_token: str = Field(alias="reviewToken")
+    status: str  # The new status being set
     
     class Config:
         allow_population_by_field_name = True
@@ -45,9 +42,8 @@ class ApplicationCreate(BaseModel):
     proposalFileData: Optional[str] = Field(None, alias="proposalFileData")
     proposalFileSize: Optional[int] = Field(None, alias="proposalFileSize")
     proposalFileType: Optional[str] = Field(None, alias="proposalFileType")
-    reviewerFeedback: List[ReviewerFeedbackCreate] = Field(default_factory=list, alias="reviewerFeedback")
+    reviewHistory: List[ReviewHistoryEntryCreate] = Field(default_factory=list, alias="reviewHistory")
     signOffApprovals: List = Field(default_factory=list, alias="signOffApprovals")
-    assignedReviewers: List[str] = Field(default_factory=list, alias="assignedReviewers")
 
     class Config:
         allow_population_by_field_name = True
@@ -65,30 +61,26 @@ class ApplicationUpdate(BaseModel):
     status: Optional[str] = None
     review_comments: Optional[str] = Field(None, alias="reviewComments")
     is_editable: Optional[bool] = Field(None, alias="isEditable")
-    assigned_reviewers: Optional[List[str]] = Field(None, alias="assignedReviewers")
     award_amount: Optional[float] = Field(None, alias="awardAmount")
     contract_file_name: Optional[str] = Field(None, alias="contractFileName")
     award_letter_generated: Optional[bool] = Field(None, alias="awardLetterGenerated")
     revision_count: Optional[int] = Field(None, alias="revisionCount")
     original_submission_date: Optional[str] = Field(None, alias="originalSubmissionDate")
     proposal_file_name: Optional[str] = Field(None, alias="proposalFileName")
-    proposal_file_data: Optional[str] = Field(None, alias="proposalFileData")  # Base64 encoded file content
-    proposal_file_size: Optional[int] = Field(None, alias="proposalFileSize")  # File size in bytes
-    proposal_file_type: Optional[str] = Field(None, alias="proposalFileType")  # MIME type
+    proposal_file_data: Optional[str] = Field(None, alias="proposalFileData")
+    proposal_file_size: Optional[int] = Field(None, alias="proposalFileSize")
+    proposal_file_type: Optional[str] = Field(None, alias="proposalFileType")
     
     class Config:
         allow_population_by_field_name = True
 
-class ReviewerFeedbackResponse(BaseModel):
+class ReviewHistoryEntryResponse(BaseModel):
     id: str
-    application_id: str = Field(alias="applicationId")
+    reviewer_name: str = Field(alias="reviewerName")
     reviewer_email: EmailStr = Field(alias="reviewerEmail")
-    reviewer_name: Optional[str] = Field(alias="reviewerName")
     comments: str
-    decision: str  # approve, reject, request_changes
-    annotated_file_name: Optional[str] = Field(alias="annotatedFileName")
     submitted_at: str = Field(alias="submittedAt")
-    review_token: str = Field(alias="reviewToken")
+    status: str
     
     class Config:
         allow_population_by_field_name = True
@@ -115,12 +107,11 @@ class ApplicationResponse(BaseModel):
     proposal_title: str = Field(alias="proposalTitle")  # Match frontend field name
     status: str  # submitted, under_review, approved, rejected, withdrawn, editable, awaiting_signoff, signoff_complete, contract_pending, contract_received, needs_revision
     submission_date: str = Field(alias="submissionDate")  # Match frontend field name
-    review_comments: str = Field(alias="reviewComments")  # Match frontend field name
-    biodata: Optional[Dict[str, Any]] = None  # Match frontend ResearcherBiodata interface
+    review_comments: str = Field(alias="reviewComments")
+    biodata: Optional[Dict[str, Any]] = None
     deadline: Optional[str] = None
     is_editable: Optional[bool] = Field(alias="isEditable")
-    assigned_reviewers: Optional[List[str]] = Field(alias="assignedReviewers")
-    reviewer_feedback: Optional[List[ReviewerFeedbackResponse]] = Field(alias="reviewerFeedback")
+    reviewHistory: Optional[List[ReviewHistoryEntryResponse]] = Field(alias="reviewHistory")
     sign_off_approvals: Optional[List[SignOffApprovalResponse]] = Field(alias="signOffApprovals")
     award_amount: Optional[float] = Field(alias="awardAmount")
     contract_file_name: Optional[str] = Field(alias="contractFileName")
@@ -128,8 +119,8 @@ class ApplicationResponse(BaseModel):
     revision_count: Optional[int] = Field(alias="revisionCount")
     original_submission_date: Optional[str] = Field(alias="originalSubmissionDate")
     proposal_file_name: Optional[str] = Field(alias="proposalFileName")
-    proposal_file_size: Optional[int] = Field(alias="proposalFileSize")  # File size in bytes
-    proposal_file_type: Optional[str] = Field(alias="proposalFileType")  # MIME type
+    proposal_file_size: Optional[int] = Field(alias="proposalFileSize")
+    proposal_file_type: Optional[str] = Field(alias="proposalFileType")
     
     class Config:
         allow_population_by_field_name = True

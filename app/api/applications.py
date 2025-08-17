@@ -5,11 +5,19 @@ from datetime import datetime
 from bson import ObjectId
 import base64
 from ..utils.dependencies import get_current_active_user, get_database, require_role
-from ..schemas.application import ApplicationCreate, ApplicationResponse, ApplicationUpdate
-from ..services.application_service import create_application, get_application_by_id, get_all_applications, get_applications_by_user, get_applications_by_status, get_applications_by_grant_call, update_application
-import os
-from pathlib import Path
-
+from ..schemas.application import ApplicationCreate, ApplicationUpdate, ReviewHistoryEntryCreate, ApplicationResponse
+from ..services.application_service import (
+    create_application,
+    get_application_by_id,
+    get_all_applications,
+    get_applications_by_user,
+    get_applications_by_status,
+    get_applications_by_grant_call,
+    update_application,
+    add_review_comment,
+    update_application_status,
+    delete_application
+)
 router = APIRouter(prefix="/applications", tags=["applications"])
 
 def build_application_response(application) -> ApplicationResponse:
@@ -28,11 +36,10 @@ def build_application_response(application) -> ApplicationResponse:
         proposal_file_name=application.proposal_file_name,
         proposal_file_size=application.proposal_file_size,
         proposal_file_type=application.proposal_file_type,
-        reviewer_feedback=application.reviewer_feedback or [],
+        reviewHistory=application.reviewHistory or [],
         revision_count=application.revision_count,
         original_submission_date=application.original_submission_date,
         is_editable=application.is_editable,
-        assigned_reviewers=application.assigned_reviewers,
         sign_off_approvals=application.sign_off_approvals,
         award_amount=application.award_amount,
         contract_file_name=application.contract_file_name,
@@ -148,7 +155,7 @@ async def update_application_status(
     }
     
     if comments:
-        update_data["review_comments"] = comments
+        update_data["reviewComments"] = comments
         update_data["final_decision"] = new_status
     
     # Set editable flag for certain statuses
@@ -256,7 +263,7 @@ async def update_application_status(
     }
     
     if comments:
-        update_data["review_comments"] = comments
+        update_data["reviewComments"] = comments
     
     # Set editable flag
     if new_status in ["needs_revision", "editable"]:
@@ -347,3 +354,46 @@ async def download_application_document(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error decoding file data: {str(e)}")
+
+@router.post("/{application_id}/review", response_model=ApplicationResponse)
+async def add_review_comment(
+    application_id: str,
+    review_data: ReviewHistoryEntryCreate,
+    new_status: Optional[str] = Query(None),
+    current_user = Depends(get_current_active_user)
+):
+    """Add review comment and optionally update status"""
+    db = await get_database()
+    
+    # Get application
+    application = await get_application_by_id(db, application_id)
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    # Create review history entry
+    review_entry = {
+        "id": str(ObjectId()),
+        "reviewerName": review_data.reviewer_name,
+        "reviewerEmail": review_data.reviewer_email,
+        "comments": review_data.comments,
+        "submittedAt": datetime.utcnow().isoformat(),
+        "status": new_status or application.status
+    }
+    
+    # Update application with review entry and optionally new status
+    # Use camelCase field name to match model alias and frontend expectations
+    update_data = {"$push": {"reviewHistory": review_entry}}
+    if new_status:
+        update_data["$set"] = {"status": new_status}
+    
+    result = await db.applications.update_one(
+        {"_id": ObjectId(application_id)},
+        update_data
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Failed to add review comment")
+    
+    # Return updated application
+    updated_application = await get_application_by_id(db, application_id)
+    return build_application_response(updated_application)

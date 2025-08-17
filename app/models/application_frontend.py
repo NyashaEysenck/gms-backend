@@ -1,17 +1,14 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
-class ReviewerFeedback(BaseModel):
-    """Exact match to frontend ReviewerFeedback interface"""
+class ReviewHistoryEntry(BaseModel):
+    """Review history entry for tracking chronological feedback"""
     id: str
-    applicationId: str
+    reviewerName: str
     reviewerEmail: str
-    reviewerName: Optional[str] = None
     comments: str
-    decision: str  # 'approve' | 'reject' | 'request_changes'
-    annotatedFileName: Optional[str] = None
     submittedAt: str
-    reviewToken: str
+    status: str
 
 class SignOffApproval(BaseModel):
     """Exact match to frontend SignOffApproval interface"""
@@ -46,7 +43,7 @@ class Application(BaseModel):
     deadline: Optional[str] = None
     isEditable: Optional[bool] = None
     assignedReviewers: Optional[List[str]] = None
-    reviewerFeedback: Optional[List[ReviewerFeedback]] = None
+    reviewHistory: Optional[List[ReviewHistoryEntry]] = None
     signOffApprovals: Optional[List[SignOffApproval]] = None
     awardAmount: Optional[float] = None
     contractFileName: Optional[str] = None

@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from ..models.application import Application, ReviewerFeedback
-from ..schemas.application import ApplicationCreate, ApplicationUpdate, ReviewerFeedbackCreate
+from ..models.application import Application, ReviewHistoryEntry
+from ..schemas.application import ApplicationCreate, ApplicationUpdate, ReviewHistoryEntryCreate
 from typing import Optional, List
 from bson import ObjectId
 from datetime import datetime
@@ -15,9 +15,8 @@ async def create_application(db: AsyncIOMotorDatabase, application_data: Applica
     application_dict.setdefault("status", "submitted")
     
     # Initialize empty arrays for fields that might be missing
-    application_dict.setdefault("reviewerFeedback", [])
+    application_dict.setdefault("reviewHistory", [])
     application_dict.setdefault("signOffApprovals", [])
-    application_dict.setdefault("assignedReviewers", [])
     
     # Set default values for optional fields
     application_dict.setdefault("revisionCount", 0)
@@ -47,9 +46,8 @@ async def get_all_applications(db: AsyncIOMotorDatabase) -> List[Application]:
     async for application_doc in db.applications.find():
         try:
             # Ensure required fields exist with defaults
-            application_doc.setdefault("reviewerFeedback", [])
+            application_doc.setdefault("reviewHistory", [])
             application_doc.setdefault("signOffApprovals", [])
-            application_doc.setdefault("assignedReviewers", [])
             application_doc.setdefault("revisionCount", 0)
             application_doc.setdefault("isEditable", False)
             
@@ -99,15 +97,32 @@ async def update_application(db: AsyncIOMotorDatabase, application_id: str, appl
         return await get_application_by_id(db, application_id)
     return None
 
-async def add_reviewer_feedback(db: AsyncIOMotorDatabase, application_id: str, feedback_data: ReviewerFeedbackCreate) -> Optional[Application]:
+async def add_review_comment(db: AsyncIOMotorDatabase, application_id: str, review_data: ReviewHistoryEntryCreate, new_status: str) -> Optional[Application]:
     if not ObjectId.is_valid(application_id):
         return None
     
-    feedback = ReviewerFeedback(**feedback_data.dict())
+    # Create review history entry with generated ID and timestamp
+    review_entry = {
+        "id": f"rev_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+        "reviewerName": review_data.reviewer_name,
+        "reviewerEmail": review_data.reviewer_email,
+        "comments": review_data.comments,
+        "submittedAt": datetime.utcnow().isoformat(),
+        "status": new_status
+    }
     
+    # Update application with new review entry, latest comment, and status
     result = await db.applications.update_one(
         {"_id": ObjectId(application_id)},
-        {"$push": {"reviewer_feedback": feedback.dict()}, "$set": {"updated_at": datetime.utcnow()}}
+        {
+            "$push": {"reviewHistory": review_entry},
+            "$set": {
+                "reviewComments": review_data.comments,
+                "status": new_status,
+                "updated_at": datetime.utcnow(),
+                "isEditable": new_status in ["needs_revision", "editable"]
+            }
+        }
     )
     
     if result.modified_count:
@@ -124,7 +139,7 @@ async def update_application_status(db: AsyncIOMotorDatabase, application_id: st
     }
     
     if decision_notes:
-        update_data["decision_notes"] = decision_notes
+        update_data["reviewComments"] = decision_notes
         update_data["final_decision"] = status
     
     result = await db.applications.update_one(
