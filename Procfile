@@ -1,1 +1,1 @@
-web: python load_frontend_data.py
+web: python load_frontend_data
