@@ -121,6 +121,7 @@ class ApplicationResponse(BaseModel):
     proposal_file_name: Optional[str] = Field(alias="proposalFileName")
     proposal_file_size: Optional[int] = Field(alias="proposalFileSize")
     proposal_file_type: Optional[str] = Field(alias="proposalFileType")
+    signoff_workflow: Optional[Dict[str, Any]] = Field(alias="signoffWorkflow")
     
     class Config:
         allow_population_by_field_name = True

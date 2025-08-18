@@ -22,29 +22,58 @@ router = APIRouter(prefix="/applications", tags=["applications"])
 
 def build_application_response(application) -> ApplicationResponse:
     """Helper function to build consistent ApplicationResponse with all fields"""
-    return ApplicationResponse(
-        id=str(application.id),
-        grant_id=application.grant_id,
-        applicant_name=application.applicant_name,
-        email=application.email,
-        proposal_title=application.proposal_title,
-        status=application.status,
-        submission_date=application.submission_date,
-        review_comments=application.review_comments,
-        biodata=application.biodata,
-        deadline=application.deadline,
-        proposal_file_name=application.proposal_file_name,
-        proposal_file_size=application.proposal_file_size,
-        proposal_file_type=application.proposal_file_type,
-        reviewHistory=application.reviewHistory or [],
-        revision_count=application.revision_count,
-        original_submission_date=application.original_submission_date,
-        is_editable=application.is_editable,
-        sign_off_approvals=application.sign_off_approvals,
-        award_amount=application.award_amount,
-        contract_file_name=application.contract_file_name,
-        award_letter_generated=application.award_letter_generated
-    )
+    # Handle both dict and object types
+    if isinstance(application, dict):
+        return ApplicationResponse(
+            id=str(application.get("_id", application.get("id", ""))),
+            grant_id=application.get("grantId", application.get("grant_id", "")),
+            applicant_name=application.get("applicantName", application.get("applicant_name", "")),
+            email=application.get("email", ""),
+            proposal_title=application.get("proposalTitle", application.get("proposal_title", "")),
+            status=application.get("status", ""),
+            submission_date=application.get("submissionDate", application.get("submission_date", "")),
+            review_comments=application.get("reviewComments", application.get("review_comments", "")),
+            biodata=application.get("biodata"),
+            deadline=application.get("deadline"),
+            proposal_file_name=application.get("proposalFileName", application.get("proposal_file_name")),
+            proposal_file_size=application.get("proposalFileSize", application.get("proposal_file_size")),
+            proposal_file_type=application.get("proposalFileType", application.get("proposal_file_type")),
+            reviewHistory=application.get("reviewHistory", []),
+            revision_count=application.get("revisionCount", application.get("revision_count")),
+            original_submission_date=application.get("originalSubmissionDate", application.get("original_submission_date")),
+            is_editable=application.get("isEditable", application.get("is_editable")),
+            sign_off_approvals=application.get("signOffApprovals", application.get("sign_off_approvals")),
+            award_amount=application.get("awardAmount", application.get("award_amount")),
+            contract_file_name=application.get("contractFileName", application.get("contract_file_name")),
+            award_letter_generated=application.get("awardLetterGenerated", application.get("award_letter_generated")),
+            signoff_workflow=application.get("signoffWorkflow", application.get("signoff_workflow"))
+        )
+    else:
+        # Handle object type (original code)
+        return ApplicationResponse(
+            id=str(application.id),
+            grant_id=application.grant_id,
+            applicant_name=application.applicant_name,
+            email=application.email,
+            proposal_title=application.proposal_title,
+            status=application.status,
+            submission_date=application.submission_date,
+            review_comments=application.review_comments,
+            biodata=application.biodata,
+            deadline=application.deadline,
+            proposal_file_name=application.proposal_file_name,
+            proposal_file_size=application.proposal_file_size,
+            proposal_file_type=application.proposal_file_type,
+            reviewHistory=application.reviewHistory or [],
+            revision_count=application.revision_count,
+            original_submission_date=application.original_submission_date,
+            is_editable=application.is_editable,
+            sign_off_approvals=application.sign_off_approvals,
+            award_amount=application.award_amount,
+            contract_file_name=application.contract_file_name,
+            award_letter_generated=application.award_letter_generated,
+            signoff_workflow=application.signoff_workflow
+        )
 
 @router.post("/", response_model=ApplicationResponse)
 async def submit_application(
@@ -397,3 +426,186 @@ async def add_review_comment(
     # Return updated application
     updated_application = await get_application_by_id(db, application_id)
     return build_application_response(updated_application)
+
+@router.post("/{application_id}/signoff/initiate")
+async def initiate_application_signoff(
+    application_id: str,
+    signoff_data: dict,
+    current_user = Depends(require_role("Grants Manager"))
+):
+    """Initiate sign-off workflow for an approved application"""
+    db = await get_database()
+    
+    # Get application
+    application = await get_application_by_id(db, application_id)
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    if application.status != "approved":
+        raise HTTPException(status_code=400, detail="Application must be approved to initiate sign-off")
+    
+    from datetime import datetime
+    import secrets
+    
+    # Create sign-off tokens for each approver
+    sign_off_tokens = []
+    approvals = []
+    
+    for approver in signoff_data.get("approvers", []):
+        token = secrets.token_urlsafe(32)
+        sign_off_tokens.append({
+            "role": approver["role"],
+            "token": token,
+            "email": approver["email"]
+        })
+        
+        approvals.append({
+            "role": approver["role"],
+            "email": approver["email"],
+            "name": approver.get("name", ""),
+            "approverName": approver.get("name", ""),  # Add for frontend compatibility
+            "token": token,
+            "status": "pending",
+            "created_at": datetime.utcnow().isoformat()
+        })
+    
+    # Update application with sign-off workflow
+    update_data = {
+        "signoff_workflow": {
+            "status": "pending",
+            "award_amount": signoff_data.get("award_amount", 0),
+            "approvals": approvals,
+            "initiated_by": current_user.email,
+            "initiated_at": datetime.utcnow().isoformat()
+        },
+        "updated_at": datetime.utcnow()
+    }
+    
+    result = await db.applications.update_one(
+        {"_id": ObjectId(application_id)},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to initiate sign-off workflow")
+    
+    return {
+        "message": "Sign-off workflow initiated successfully",
+        "sign_off_tokens": sign_off_tokens
+    }
+
+@router.get("/signoff/{token}")
+async def get_application_by_signoff_token(token: str):
+    """Get application and approval details by sign-off token"""
+    db = await get_database()
+    
+    # Find application with this sign-off token
+    application = await db.applications.find_one({
+        "signoff_workflow.approvals.token": token
+    })
+    
+    if not application:
+        raise HTTPException(status_code=404, detail="Invalid or expired sign-off token")
+    
+    # Find the specific approval for this token
+    approval = None
+    for app_approval in application.get("signoff_workflow", {}).get("approvals", []):
+        if app_approval.get("token") == token:
+            approval = app_approval
+            break
+    
+    if not approval:
+        raise HTTPException(status_code=404, detail="Approval not found for token")
+    
+    # Convert application to response format
+    app_response = build_application_response(application)
+    
+    return {
+        "application": app_response,
+        "approval": approval
+    }
+
+@router.post("/signoff/{token}")
+async def submit_signoff_approval(
+    token: str,
+    submission: dict
+):
+    """Submit sign-off approval/rejection"""
+    db = await get_database()
+    
+    # Find application with this sign-off token
+    application = await db.applications.find_one({
+        "signoff_workflow.approvals.token": token
+    })
+    
+    if not application:
+        raise HTTPException(status_code=404, detail="Invalid or expired sign-off token")
+    
+    from datetime import datetime
+    
+    # Update the specific approval
+    result = await db.applications.update_one(
+        {"_id": application["_id"], "signoff_workflow.approvals.token": token},
+        {
+            "$set": {
+                "signoff_workflow.approvals.$.status": submission["decision"],
+                "signoff_workflow.approvals.$.comments": submission.get("comments", ""),
+                "signoff_workflow.approvals.$.approver_name": submission.get("approver_name", ""),
+                "signoff_workflow.approvals.$.approved_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to submit approval")
+    
+    # Check if all approvals are complete
+    updated_application = await db.applications.find_one({"_id": application["_id"]})
+    approvals = updated_application.get("signoff_workflow", {}).get("approvals", [])
+    
+    all_approved = all(approval.get("status") == "approved" for approval in approvals)
+    any_rejected = any(approval.get("status") == "rejected" for approval in approvals)
+    
+    # Update overall workflow status
+    if any_rejected:
+        workflow_status = "rejected"
+    elif all_approved:
+        workflow_status = "approved"
+    else:
+        workflow_status = "pending"
+    
+    await db.applications.update_one(
+        {"_id": application["_id"]},
+        {"$set": {"signoff_workflow.status": workflow_status}}
+    )
+    
+    return {
+        "message": "Sign-off approval submitted successfully",
+        "application": build_application_response(updated_application)
+    }
+
+@router.get("/{application_id}/signoff/status")
+async def get_signoff_status(
+    application_id: str,
+    current_user = Depends(get_current_active_user)
+):
+    """Get sign-off status for an application"""
+    db = await get_database()
+    
+    application = await get_application_by_id(db, application_id)
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    signoff_workflow = application.signoff_workflow or {}
+    approvals = signoff_workflow.get("approvals", [])
+    
+    completed_approvals = sum(1 for approval in approvals if approval.get("status") in ["approved", "rejected"])
+    total_approvals = len(approvals)
+    current_status = signoff_workflow.get("status", "Not initiated")
+    
+    return {
+        "current_status": current_status,
+        "completed_approvals": completed_approvals,
+        "total_approvals": total_approvals
+    }

@@ -78,6 +78,7 @@ class Application(BaseModel):
     proposal_file_data: Optional[str] = Field(None, alias="proposalFileData")  # Base64 encoded file content
     proposal_file_size: Optional[int] = Field(None, alias="proposalFileSize")  # File size in bytes
     proposal_file_type: Optional[str] = Field(None, alias="proposalFileType")  # MIME type
+    signoff_workflow: Optional[dict] = Field(None, alias="signoffWorkflow")  # Sign-off workflow data
     created_at: datetime = Field(default_factory=datetime.utcnow, alias="createdAt")
     updated_at: datetime = Field(default_factory=datetime.utcnow, alias="updatedAt")
 

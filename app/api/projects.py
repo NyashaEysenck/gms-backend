@@ -255,9 +255,15 @@ async def get_project_for_vc_signoff(token: str):
     
     return {
         "id": str(project.id),
+        "application_id": project.application_id,
         "title": project.title,
         "status": project.status,
-        "closure_workflow": project.closure_workflow
+        "start_date": project.start_date,
+        "end_date": project.end_date,
+        "final_report": project.final_report,
+        "closure_workflow": project.closure_workflow,
+        "created_at": project.created_at.isoformat(),
+        "updated_at": project.updated_at.isoformat()
     }
 
 @router.post("/vc-signoff/{token}/submit")
@@ -270,6 +276,88 @@ async def submit_vc_sign_off(
     if not project:
         raise HTTPException(status_code=404, detail="Invalid or expired token")
     
-    # In a real implementation, you would update the project with VC decision
-    # For now, we'll just return success
-    return {"message": "VC sign-off submitted successfully"}
+    # Update project with VC decision
+    from datetime import datetime
+    
+    update_data = {
+        "closure_workflow.status": "signed_off" if submission.decision == "approved" else "rejected",
+        "closure_workflow.vc_signed_by": submission.vc_name,
+        "closure_workflow.vc_signed_date": datetime.utcnow().isoformat(),
+        "closure_workflow.vc_notes": submission.notes,
+        "updated_at": datetime.utcnow()
+    }
+    
+    # If approved, also update project status
+    if submission.decision == "approved":
+        update_data["status"] = "completed"
+    
+    result = await db.projects.update_one(
+        {"_id": project.id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to update project")
+    
+    return {"message": "VC sign-off submitted successfully", "status": update_data["closure_workflow.status"]}
+
+@router.put("/{project_id}/milestones/{milestone_id}")
+async def update_milestone(
+    project_id: str,
+    milestone_id: str,
+    milestone_update: dict,
+    current_user = Depends(get_current_active_user)
+):
+    db = await get_database()
+    
+    # Check if user has access to this project
+    if current_user.role == "Researcher":
+        user_projects = await get_projects_by_user(db, current_user.email)
+        if not any(str(p.id) == project_id for p in user_projects):
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    from datetime import datetime
+    
+    # Update milestone in project
+    update_fields = {f"milestones.$.{k}": v for k, v in milestone_update.items()}
+    update_fields["updated_at"] = datetime.utcnow()
+    
+    result = await db.projects.update_one(
+        {"_id": ObjectId(project_id), "milestones.id": milestone_id},
+        {"$set": update_fields}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Project or milestone not found")
+    
+    return {"message": "Milestone updated successfully"}
+
+@router.delete("/{project_id}/partners/{partner_id}")
+async def remove_partner(
+    project_id: str,
+    partner_id: str,
+    current_user = Depends(get_current_active_user)
+):
+    db = await get_database()
+    
+    # Check if user has access to this project
+    if current_user.role == "Researcher":
+        user_projects = await get_projects_by_user(db, current_user.email)
+        if not any(str(p.id) == project_id for p in user_projects):
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    from datetime import datetime
+    
+    # Remove partner from project
+    result = await db.projects.update_one(
+        {"_id": ObjectId(project_id)},
+        {
+            "$pull": {"partners": {"id": partner_id}},
+            "$set": {"updated_at": datetime.utcnow()}
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Project or partner not found")
+    
+    return {"message": "Partner removed successfully"}
