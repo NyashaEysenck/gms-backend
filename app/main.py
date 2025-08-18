@@ -74,25 +74,32 @@ async def load_sample_data_if_empty():
         
         print("Loading sample data to empty database...")
         
+        # Import bcrypt for proper password hashing
+        from passlib.context import CryptContext
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        
         # 1. Load Users
         users_data = [
             {
                 "email": "researcher@grants.edu",
-                "password": hashlib.sha256("research123".encode()).hexdigest(),
+                "password": "research123",
+                "hashed_password": pwd_context.hash("research123"),
                 "role": "Researcher",
                 "name": "Dr. Sarah Johnson",
                 "createdAt": datetime.utcnow().isoformat()
             },
             {
                 "email": "manager@grants.edu", 
-                "password": hashlib.sha256("manager123".encode()).hexdigest(),
+                "password": "manager123",
+                "hashed_password": pwd_context.hash("manager123"),
                 "role": "Grants Manager",
                 "name": "Michael Chen",
                 "createdAt": datetime.utcnow().isoformat()
             },
             {
                 "email": "admin@grants.edu",
-                "password": hashlib.sha256("admin123".encode()).hexdigest(),
+                "password": "admin123",
+                "hashed_password": pwd_context.hash("admin123"),
                 "role": "Admin",
                 "name": "Lisa Rodriguez",
                 "createdAt": datetime.utcnow().isoformat()
@@ -105,24 +112,28 @@ async def load_sample_data_if_empty():
             {
                 "id": "grant_001",
                 "title": "Research Innovation Grant 2024",
-                "description": "Supporting innovative research projects in technology and science",
+                "type": "Research",
+                "sponsor": "National Science Foundation",
+                "scope": "Supporting innovative research projects in technology and science",
                 "status": "Open",
                 "deadline": "2024-12-31T23:59:59Z",
-                "fundingAmount": 500000,
-                "eligibilityCriteria": "Open to all researchers with PhD",
-                "applicationGuidelines": "Submit proposal with budget and timeline",
+                "eligibility": "Open to all researchers with PhD",
+                "requirements": "Submit proposal with budget and timeline",
+                "visibility": "Public",
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat()
             },
             {
                 "id": "grant_002", 
                 "title": "Healthcare Innovation Fund",
-                "description": "Advancing healthcare through innovative research",
+                "type": "Healthcare",
+                "sponsor": "Health Research Council",
+                "scope": "Advancing healthcare through innovative research",
                 "status": "Open",
                 "deadline": "2024-11-30T23:59:59Z",
-                "fundingAmount": 750000,
-                "eligibilityCriteria": "Healthcare researchers and institutions",
-                "applicationGuidelines": "Focus on patient impact and clinical relevance",
+                "eligibility": "Healthcare researchers and institutions",
+                "requirements": "Focus on patient impact and clinical relevance",
+                "visibility": "Public",
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat()
             }
