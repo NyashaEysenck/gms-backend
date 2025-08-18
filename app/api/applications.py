@@ -509,14 +509,20 @@ async def get_application_by_signoff_token(token: str):
     
     # Find the specific approval for this token
     approval = None
-    for app_approval in application.get("signoff_workflow", {}).get("approvals", []):
+    signoff_workflow = application.get("signoff_workflow", {})
+    for app_approval in signoff_workflow.get("approvals", []):
         if app_approval.get("token") == token:
             approval = app_approval
             break
     
     if not approval:
         raise HTTPException(status_code=404, detail="Approval not found for token")
-    
+
+    # Manually add award_amount to the top-level of the application dict
+    # so build_application_response can find it.
+    if "award_amount" in signoff_workflow:
+        application["award_amount"] = signoff_workflow["award_amount"]
+
     # Convert application to response format
     app_response = build_application_response(application)
     
