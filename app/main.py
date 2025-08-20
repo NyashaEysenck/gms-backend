@@ -47,17 +47,17 @@ app.include_router(reviewers.router)
 app.include_router(grant_calls.router)
 app.include_router(projects.router)
 
-# Startup and shutdown events
-@app.on_event("startup")
-async def startup_event():
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def life_span(app: FastAPI):
     # await connect_to_mongo()
     # await load_sample_data_if_empty()
     print("Starting up...")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    await close_mongo_connection()
-
+    yield
+    print(f"Server has been stopped")
+    # await close_mongo_connection()
+    
 @app.get("/")
 async def root():
     return {"message": "Grants Management System API", "version": "1.0.0"}
