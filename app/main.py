@@ -50,8 +50,9 @@ app.include_router(projects.router)
 # Startup and shutdown events
 @app.on_event("startup")
 async def startup_event():
-    await connect_to_mongo()
-    await load_sample_data_if_empty()
+    # await connect_to_mongo()
+    # await load_sample_data_if_empty()
+    print("Starting up...")
 
 @app.on_event("shutdown")
 async def shutdown_event():
