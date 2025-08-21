@@ -15,11 +15,22 @@ from .utils.error_handlers import (
 from datetime import datetime
 import secrets
 import hashlib
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def life_span(app: FastAPI):
+    await connect_to_mongo()
+    await load_sample_data_if_empty()
+    print("Starting up...")
+    yield
+    print(f"Server has been stopped")
+    await close_mongo_connection()
 
 app = FastAPI(
     title="Grants Management System API",
     description="Backend API for managing grant applications, projects, and funding workflows",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=life_span
 )
 
 # CORS middleware
@@ -46,17 +57,6 @@ app.include_router(admin.router)
 app.include_router(reviewers.router)
 app.include_router(grant_calls.router)
 app.include_router(projects.router)
-
-from contextlib import asynccontextmanager
-
-@asynccontextmanager
-async def life_span(app: FastAPI):
-    # await connect_to_mongo()
-    # await load_sample_data_if_empty()
-    print("Starting up...")
-    yield
-    print(f"Server has been stopped")
-    # await close_mongo_connection()
     
 @app.get("/")
 async def root():
