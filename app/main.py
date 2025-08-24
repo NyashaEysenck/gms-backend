@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from .db_config import connect_to_mongo, close_mongo_connection, get_database
-from .api import auth, users, applications, admin, reviewers, grant_calls, projects
+from .api import auth, users, admin, reviewers, grant_calls, projects
+from .api.applications import router as applications_router
 from .config import settings
 from .utils.error_handlers import (
     AuthenticationError,
@@ -16,6 +17,7 @@ from datetime import datetime
 import secrets
 import hashlib
 from contextlib import asynccontextmanager
+from bson import ObjectId
 
 @asynccontextmanager
 async def life_span(app: FastAPI):
@@ -52,7 +54,7 @@ app.add_exception_handler(Exception, general_exception_handler)
 # Include routers
 app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(applications.router)
+app.include_router(applications_router)
 app.include_router(admin.router)
 app.include_router(reviewers.router)
 app.include_router(grant_calls.router)
@@ -157,7 +159,7 @@ async def load_sample_data_if_empty():
                 "budgetAmount": 500000.0,
                 "budgetJustification": "Equipment, personnel, and computational resources",
                 "timeline": "24 months",
-                "status": "approved",
+                "status": "manager_approved",
                 "submissionDate": "2024-07-15T10:30:00Z",
                 "reviewComments": "Excellent proposal with strong methodology",
                 "deadline": "2024-12-31T23:59:59Z",
@@ -183,9 +185,103 @@ async def load_sample_data_if_empty():
                         "status": "approved"
                     }
                 ],
+                "signoff_workflow": {
+                    "status": "pending",
+                    "award_amount": 500000.0,
+                    "approvals": [
+                        {
+                            "role": "DORI",
+                            "email": "dori@grants.edu",
+                            "name": "Dr. DORI Manager",
+                            "approverName": "Dr. DORI Manager",
+                            "token": "sample_dori_token_123",
+                            "status": "pending",
+                            "created_at": datetime.utcnow().isoformat()
+                        },
+                        {
+                            "role": "DVC",
+                            "email": "dvc@grants.edu", 
+                            "name": "Prof. DVC Leader",
+                            "approverName": "Prof. DVC Leader",
+                            "token": "sample_dvc_token_456",
+                            "status": "pending",
+                            "created_at": datetime.utcnow().isoformat()
+                        }
+                    ],
+                    "initiated_by": "manager@grants.edu",
+                    "initiated_at": datetime.utcnow().isoformat()
+                },
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat()
-            }
+            },
+        {
+            "_id": ObjectId(),
+            "grantId": "grant_002",
+            "applicantName": "Dr. Michael Chen",
+            "email": "m.chen@university.edu",
+            "proposalTitle": "Renewable Energy Storage Solutions",
+            "institution": "Green Tech University",
+            "department": "Engineering",
+            "projectSummary": "Research into advanced battery technologies for renewable energy storage",
+            "objectives": "Develop next-generation battery storage systems",
+            "methodology": "Materials science and electrochemical testing",
+            "expectedOutcomes": "20% improvement in energy storage efficiency",
+            "budgetAmount": 750000.0,
+            "budgetJustification": "Laboratory equipment, materials, and research staff",
+            "timeline": "36 months",
+            "status": "signoff_approved",
+            "submissionDate": "2024-06-01T09:00:00Z",
+            "reviewComments": "Outstanding research proposal with clear commercial potential",
+            "deadline": "2024-11-30T23:59:59Z",
+            "revisionCount": 1,
+            "originalSubmissionDate": "2024-05-15T14:20:00Z",
+            "isEditable": False,
+            "proposalFileName": "renewable-energy-storage.pdf",
+            "proposalFileSize": 3072000,
+            "proposalFileType": "application/pdf",
+            "biodata": {
+                "name": "Dr. Michael Chen",
+                "age": 42,
+                "email": "m.chen@university.edu",
+                "firstTimeApplicant": False
+            },
+            "signoff_workflow": {
+                "status": "approved",
+                "initiated_at": "2024-07-01T10:00:00Z",
+                "award_amount": 750000.0,
+                "approvals": [
+                    {
+                        "role": "DORI",
+                        "approver_email": "dori@university.edu",
+                        "approver_name": "Dr. Patricia Williams",
+                        "status": "approved",
+                        "comments": "Excellent research with strong potential impact",
+                        "sign_off_token": "dori_token_002",
+                        "approved_at": "2024-07-02T11:30:00Z"
+                    },
+                    {
+                        "role": "DVC",
+                        "approver_email": "dvc@university.edu", 
+                        "approver_name": "Prof. Robert Taylor",
+                        "status": "approved",
+                        "comments": "Strongly support this innovative research",
+                        "sign_off_token": "dvc_token_002",
+                        "approved_at": "2024-07-03T14:15:00Z"
+                    },
+                    {
+                        "role": "VC",
+                        "approver_email": "vc@university.edu",
+                        "approver_name": "Prof. Elizabeth Davis",
+                        "status": "approved", 
+                        "comments": "Approved for full funding amount",
+                        "sign_off_token": "vc_token_002",
+                        "approved_at": "2024-07-04T16:45:00Z"
+                    }
+                ]
+            },
+            "createdAt": datetime.utcnow(),
+            "updatedAt": datetime.utcnow()
+        }
         ]
         await db.applications.insert_many(applications_data)
         

@@ -59,7 +59,7 @@ class Application(BaseModel):
     budget_amount: float = Field(default=0.0, alias="budgetAmount")
     budget_justification: str = Field(default="Budget justification to be provided", alias="budgetJustification")
     timeline: str = "12 months"
-    status: str = "submitted"  # submitted, under_review, approved, rejected, withdrawn, editable, awaiting_signoff, signoff_complete, contract_pending, contract_received, needs_revision
+    status: str = "submitted"  # submitted, under_review, manager_approved, rejected, withdrawn, editable, awaiting_signoff, signoff_approved, contract_pending, contract_received, needs_revision
     submission_date: str = Field(default_factory=lambda: datetime.utcnow().isoformat(), alias="submissionDate")
     review_comments: str = Field(default="", alias="reviewComments")
     biodata: Optional[dict[str, Any]] = None  # Match frontend ResearcherBiodata interface
@@ -69,7 +69,7 @@ class Application(BaseModel):
     decision_notes: Optional[str] = Field(None, alias="decisionNotes")
     is_editable: Optional[bool] = Field(None, alias="isEditable")
     sign_off_approvals: Optional[List[SignOffApproval]] = Field(None, alias="signOffApprovals")
-    award_amount: Optional[float] = Field(None, alias="awardAmount")
+    # award_amount moved to signoff_workflow.award_amount for consistency
     contract_file_name: Optional[str] = Field(None, alias="contractFileName")
     award_letter_generated: Optional[bool] = Field(None, alias="awardLetterGenerated")
     revision_count: Optional[int] = Field(None, alias="revisionCount")

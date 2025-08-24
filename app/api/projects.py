@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from typing import List, Optional
+from bson import ObjectId
 from ..db_config import get_database
 from ..services.project_service import (
     create_project, get_all_projects, get_project_by_id, get_projects_by_user,
@@ -39,6 +40,11 @@ class VCSignOffSubmission(BaseModel):
     notes: str
     vc_name: str
 
+class RequisitionStatusUpdate(BaseModel):
+    status: str  # approved, rejected
+    review_notes: str
+    reviewed_by: str
+
 @router.post("/")
 async def create_new_project(
     project_data: ProjectCreate,
@@ -66,14 +72,39 @@ async def list_projects(current_user = Depends(get_current_active_user)):
     return [
         {
             "id": str(project.id),
-            "application_id": project.application_id,
+            "applicationId": project.application_id,
             "title": project.title,
             "status": project.status,
-            "start_date": project.start_date,
-            "end_date": project.end_date,
-            "milestones": project.milestones,
-            "created_at": project.created_at.isoformat(),
-            "updated_at": project.updated_at.isoformat()
+            "startDate": project.start_date,
+            "endDate": project.end_date,
+            "milestones": [
+                {
+                    "id": m.id,
+                    "title": m.title,
+                    "dueDate": m.due_date,
+                    "status": m.status,
+                    "description": m.description,
+                    "progressReportUploaded": m.progress_report_uploaded or False,
+                    "progressReportDate": m.progress_report_date,
+                    "progressReportFilename": m.progress_report_filename,
+                    "isOverdue": m.is_overdue or False
+                } for m in project.milestones
+            ],
+            "requisitions": [
+                {
+                    "id": r.id,
+                    "milestoneId": r.milestone_id,
+                    "amount": r.amount,
+                    "requestedDate": r.requested_date,
+                    "status": r.status,
+                    "notes": r.notes,
+                    "reviewedBy": r.reviewed_by,
+                    "reviewedDate": r.reviewed_date,
+                    "reviewNotes": r.review_notes
+                } for r in project.requisitions
+            ] if project.requisitions else [],
+            "createdAt": project.created_at.isoformat(),
+            "updatedAt": project.updated_at.isoformat()
         }
         for project in projects
     ]
@@ -96,18 +127,66 @@ async def get_project(
     
     return {
         "id": str(project.id),
-        "application_id": project.application_id,
+        "applicationId": project.application_id,
         "title": project.title,
         "status": project.status,
-        "start_date": project.start_date,
-        "end_date": project.end_date,
-        "milestones": project.milestones,
-        "requisitions": project.requisitions,
-        "partners": project.partners,
-        "final_report": project.final_report,
-        "closure_workflow": project.closure_workflow,
-        "created_at": project.created_at.isoformat(),
-        "updated_at": project.updated_at.isoformat()
+        "startDate": project.start_date,
+        "endDate": project.end_date,
+        "milestones": [
+            {
+                "id": m.id,
+                "title": m.title,
+                "dueDate": m.due_date,
+                "status": m.status,
+                "description": m.description,
+                "progressReportUploaded": m.progress_report_uploaded or False,
+                "progressReportDate": m.progress_report_date,
+                "progressReportFilename": m.progress_report_filename,
+                "isOverdue": m.is_overdue or False
+            } for m in project.milestones
+        ],
+        "requisitions": [
+            {
+                "id": r.id,
+                "milestoneId": r.milestone_id,
+                "amount": r.amount,
+                "requestedDate": r.requested_date,
+                "status": r.status,
+                "notes": r.notes,
+                "reviewedBy": r.reviewed_by,
+                "reviewedDate": r.reviewed_date,
+                "reviewNotes": r.review_notes
+            } for r in project.requisitions
+        ] if project.requisitions else [],
+        "partners": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "role": p.role,
+                "mouFilename": p.mou_filename,
+                "uploadedDate": p.uploaded_date
+            } for p in project.partners
+        ] if project.partners else [],
+        "finalReport": {
+            "narrativeReport": project.final_report.narrative_report,
+            "financialReport": project.final_report.financial_report,
+            "status": project.final_report.status,
+            "submittedDate": project.final_report.submitted_date,
+            "reviewedBy": project.final_report.reviewed_by,
+            "reviewedDate": project.final_report.reviewed_date,
+            "reviewNotes": project.final_report.review_notes
+        } if project.final_report else None,
+        "closureWorkflow": {
+            "status": project.closure_workflow.status,
+            "vcSignOffToken": project.closure_workflow.vc_sign_off_token,
+            "vcSignedBy": project.closure_workflow.vc_signed_by,
+            "vcSignedDate": project.closure_workflow.vc_signed_date,
+            "vcNotes": project.closure_workflow.vc_notes,
+            "closureCertificateGenerated": project.closure_workflow.closure_certificate_generated,
+            "closureCertificateDate": project.closure_workflow.closure_certificate_date
+        } if project.closure_workflow else None,
+        "createdAt": project.created_at.isoformat(),
+        "updatedAt": project.updated_at.isoformat()
     }
 
 @router.patch("/{project_id}/status")
@@ -361,3 +440,33 @@ async def remove_partner(
         raise HTTPException(status_code=404, detail="Project or partner not found")
     
     return {"message": "Partner removed successfully"}
+
+@router.patch("/{project_id}/requisitions/{requisition_id}/status")
+async def update_requisition_status(
+    project_id: str,
+    requisition_id: str,
+    status_update: RequisitionStatusUpdate,
+    current_user = Depends(require_role("Grants Manager"))
+):
+    db = await get_database()
+    
+    from datetime import datetime
+    
+    # Update requisition status in project
+    result = await db.projects.update_one(
+        {"_id": ObjectId(project_id), "requisitions.id": requisition_id},
+        {
+            "$set": {
+                "requisitions.$.status": status_update.status,
+                "requisitions.$.review_notes": status_update.review_notes,
+                "requisitions.$.reviewed_by": status_update.reviewed_by,
+                "requisitions.$.reviewed_date": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Project or requisition not found")
+    
+    return {"message": f"Requisition {status_update.status} successfully"}

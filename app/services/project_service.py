@@ -36,9 +36,9 @@ async def get_all_projects(db: AsyncIOMotorDatabase) -> List[Project]:
     return projects
 
 async def get_projects_by_user(db: AsyncIOMotorDatabase, user_email: str) -> List[Project]:
-    # First get approved applications for this user
+    # First get manager approved or signoff approved applications for this user
     approved_applications = []
-    async for app in db.applications.find({"email": user_email, "status": "approved"}):
+    async for app in db.applications.find({"email": user_email, "status": {"$in": ["manager_approved", "signoff_approved"]}}):
         approved_applications.append(str(app["_id"]))
     
     # Then get projects for those applications
