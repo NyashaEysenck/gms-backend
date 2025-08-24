@@ -113,9 +113,8 @@ async def load_sample_data_if_empty():
         # 2. Load Grant Calls
         grant_calls_data = [
             {
-                "id": "grant_001",
                 "title": "Research Innovation Grant 2024",
-                "type": "Research",
+                "type": "ORI",
                 "sponsor": "National Science Foundation",
                 "scope": "Supporting innovative research projects in technology and science",
                 "status": "Open",
@@ -127,9 +126,8 @@ async def load_sample_data_if_empty():
                 "updatedAt": datetime.utcnow().isoformat()
             },
             {
-                "id": "grant_002", 
                 "title": "Healthcare Innovation Fund",
-                "type": "Healthcare",
+                "type": "External",
                 "sponsor": "Health Research Council",
                 "scope": "Advancing healthcare through innovative research",
                 "status": "Open",
@@ -139,14 +137,67 @@ async def load_sample_data_if_empty():
                 "visibility": "Public",
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat()
+            },
+            {
+                "title": "Graduate Student Research Scholarship",
+                "type": "Scholarship",
+                "sponsor": "University Research Foundation",
+                "scope": "Supporting graduate student research projects",
+                "status": "Open",
+                "deadline": "2024-10-15T23:59:59Z",
+                "eligibility": "Enrolled graduate students",
+                "requirements": "Academic transcript and research proposal",
+                "visibility": "Public",
+                "createdAt": datetime.utcnow().isoformat(),
+                "updatedAt": datetime.utcnow().isoformat()
+            },
+            {
+                "title": "International Conference Travel Grant",
+                "type": "Travel/Conference",
+                "sponsor": "Academic Travel Fund",
+                "scope": "Supporting conference attendance and presentation",
+                "status": "Open",
+                "deadline": "2024-09-30T23:59:59Z",
+                "eligibility": "Faculty and graduate students presenting research",
+                "requirements": "Conference acceptance letter and travel budget",
+                "visibility": "Public",
+                "createdAt": datetime.utcnow().isoformat(),
+                "updatedAt": datetime.utcnow().isoformat()
+            },
+            {
+                "title": "Government Research Initiative",
+                "type": "GOVT",
+                "sponsor": "Department of Science and Technology",
+                "scope": "Government-funded research in priority areas",
+                "status": "Open",
+                "deadline": "2025-01-31T23:59:59Z",
+                "eligibility": "Accredited research institutions",
+                "requirements": "Detailed proposal with government alignment",
+                "visibility": "Public",
+                "createdAt": datetime.utcnow().isoformat(),
+                "updatedAt": datetime.utcnow().isoformat()
+            },
+            {
+                "title": "Postdoctoral Research Fellowship",
+                "type": "Fellowship",
+                "sponsor": "National Research Fellowship Program",
+                "scope": "Supporting postdoctoral researchers",
+                "status": "Open",
+                "deadline": "2024-12-15T23:59:59Z",
+                "eligibility": "Recent PhD graduates",
+                "requirements": "PhD certificate and research plan",
+                "visibility": "Public",
+                "createdAt": datetime.utcnow().isoformat(),
+                "updatedAt": datetime.utcnow().isoformat()
             }
         ]
-        await db.grant_calls.insert_many(grant_calls_data)
+        grant_call_results = await db.grant_calls.insert_many(grant_calls_data)
+        grant_call_ids = [str(id) for id in grant_call_results.inserted_ids]
         
         # 3. Load Sample Applications
         applications_data = [
             {
-                "grantId": "grant_001",
+                "grantId": grant_call_ids[0],
                 "applicantName": "Dr. Sarah Johnson",
                 "email": "researcher@grants.edu",
                 "proposalTitle": "AI-Powered Climate Change Prediction Models",
@@ -216,7 +267,7 @@ async def load_sample_data_if_empty():
             },
         {
             "_id": ObjectId(),
-            "grantId": "grant_002",
+            "grantId": grant_call_ids[1],
             "applicantName": "Dr. Michael Chen",
             "email": "m.chen@university.edu",
             "proposalTitle": "Renewable Energy Storage Solutions",

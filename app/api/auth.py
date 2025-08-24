@@ -17,15 +17,15 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     db = await get_database()
     email = form_data.username.lower().strip()
     
-    # Check rate limiting
-    is_limited, retry_after = rate_limiter.is_rate_limited(email)
-    if is_limited:
-        raise AuthenticationError(
-            error_code=ErrorCode.TOO_MANY_ATTEMPTS,
-            message="Too many failed login attempts",
-            details=f"Account temporarily locked. Try again in {retry_after} seconds",
-            retry_after=retry_after
-        )
+    #Check rate limiting
+    # is_limited, retry_after = rate_limiter.is_rate_limited(email)
+    # if is_limited:
+    #     raise AuthenticationError(
+    #         error_code=ErrorCode.TOO_MANY_ATTEMPTS,
+    #         message="Too many failed login attempts",
+    #         details=f"Account temporarily locked. Try again in {retry_after} seconds",
+    #         retry_after=retry_after
+    #     )
     
     # Authenticate user without role requirement
     user = await authenticate_user(db, email, form_data.password)

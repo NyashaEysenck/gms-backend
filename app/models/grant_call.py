@@ -1,14 +1,22 @@
 from pydantic import BaseModel, Field, validator
 from typing import Optional, Union
 from datetime import datetime
+from enum import Enum
 from bson import ObjectId
 from .user import PyObjectId
 
+class GrantType(str, Enum):
+    ORI = "ORI"
+    EXTERNAL = "External"
+    SCHOLARSHIP = "Scholarship"
+    TRAVEL_CONFERENCE = "Travel/Conference"
+    GOVT = "GOVT"
+    FELLOWSHIP = "Fellowship"
+
 class GrantCall(BaseModel):
-    id: Optional[Union[str, PyObjectId]] = Field(None, alias="_id")
-    frontend_id: Optional[str] = Field(None, alias="id")  # Handle frontend string IDs
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     title: str
-    type: str
+    type: GrantType
     sponsor: str
     deadline: str
     scope: str
@@ -18,14 +26,6 @@ class GrantCall(BaseModel):
     visibility: str = "Public"  # Public, Restricted
     created_at: Optional[datetime] = Field(None, alias="createdAt")
     updated_at: Optional[datetime] = Field(None, alias="updatedAt")
-
-    @validator('id', pre=True, always=True)
-    def set_id(cls, v, values):
-        # If we have a frontend_id (string), use that as the main id
-        if 'frontend_id' in values and values['frontend_id']:
-            return values['frontend_id']
-        # Otherwise use the MongoDB _id
-        return v or PyObjectId()
 
     @validator('created_at', pre=True, always=True)
     def set_created_at(cls, v):
