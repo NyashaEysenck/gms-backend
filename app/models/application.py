@@ -72,6 +72,11 @@ class Application(BaseModel):
     # award_amount moved to signoff_workflow.award_amount for consistency
     contract_file_name: Optional[str] = Field(None, alias="contractFileName")
     award_letter_generated: Optional[bool] = Field(None, alias="awardLetterGenerated")
+    # Award letter file metadata and content (stored base64 in DB)
+    award_letter_generated_at: Optional[datetime] = Field(None, alias="awardLetterGeneratedAt")
+    award_letter_file_name: Optional[str] = Field(None, alias="awardLetterFileName")
+    award_letter_file_type: Optional[str] = Field(None, alias="awardLetterFileType")
+    award_letter_file_data: Optional[str] = Field(None, alias="awardLetterFileData")
     revision_count: Optional[int] = Field(None, alias="revisionCount")
     original_submission_date: Optional[str] = Field(None, alias="originalSubmissionDate")
     proposal_file_name: Optional[str] = Field(None, alias="proposalFileName")
